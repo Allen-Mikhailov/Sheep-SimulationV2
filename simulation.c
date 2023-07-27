@@ -29,32 +29,26 @@
 
 #pragma region Simulation Constants
 
-#define SIM_STARTING_SHEEP 10
+#define SIM_STARTING_SHEEP 2
 #define SIM_TICKS 10000
 
 #pragma endregion
 
-struct Sheep
-{
-    int age;
-    unsigned char gender;
-
-    double x;
-    double y;
-
-    double hunger;
-};
-
 int main()
 {
-    struct LinkedList sheepList;
+    struct LinkedList sheepList = newList();
 
     for (int i = 0; i < SIM_STARTING_SHEEP; i++)
     {
         struct Sheep sheep;
         sheep.age = i;
-        AddToList(&sheepList, (void*) &sheepList);
+        AddToList(&sheepList, (void*) &sheep);
+        printf("plz %d \n", ((struct Sheep*) (sheepList.tail->obj))->age);
     }
+
+    printf("plzz %d \n", sheepList.head == NULL);
+
+    printf("Counted %d", countList(&sheepList));
 
     return 0;
 }
