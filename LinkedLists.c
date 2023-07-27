@@ -23,6 +23,7 @@ struct LinkedListNode
     struct LinkedListNode *previous;
     struct LinkedListNode *next;
     void * obj;
+    int t;
 };
 
 struct LinkedList newList()
@@ -37,11 +38,18 @@ void AddToList(struct LinkedList * list, void* obj)
 {
     struct LinkedListNode newNode;
     newNode.obj = obj;
-    newNode.previous = (*list).head;
+    newNode.previous = (*list).head;\
+    newNode.next = NULL;
+
+    // if (newNode.t == 10)
+    printf("t: %d-", newNode.t );
+
+    newNode.t = 100;
 
     struct LinkedListNode newNode2;
 
-    printf("%ddawda\n", &newNode == &newNode2 );
+    if (&newNode == (*list).head)
+        printf("adawda");
     newNode.next = NULL;
 
     if (list->head != NULL) {
