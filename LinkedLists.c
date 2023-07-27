@@ -4,7 +4,7 @@
 struct Sheep
 {
     int age;
-    unsigned char gender;
+    int gender;
 
     double x;
     double y;
@@ -41,17 +41,6 @@ void AddToList(struct LinkedList * list, void* obj)
     newNode.previous = (*list).head;\
     newNode.next = NULL;
 
-    // if (newNode.t == 10)
-    printf("t: %d-", newNode.t );
-
-    newNode.t = 100;
-
-    struct LinkedListNode newNode2;
-
-    if (&newNode == (*list).head)
-        printf("adawda");
-    newNode.next = NULL;
-
     if (list->head != NULL) {
         list->head->next = &newNode;
         list->head = &newNode;
@@ -77,11 +66,16 @@ int countList(struct LinkedList * list)
 
     while(head->next != NULL)
     {
+        if (head == head->next)
+        {
+            printf("Fck"); 
+            break;
+        }
         head = head->next;
         
         struct Sheep *shep = (struct Sheep *)  head->obj;
 
-        printf("%d\n", shep->age);
+        // printf("L-%d\n", shep->age);
         c++;
     }
 
