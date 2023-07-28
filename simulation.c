@@ -29,26 +29,117 @@
 
 #pragma region Simulation Constants
 
-#define SIM_STARTING_SHEEP 2
-#define SIM_TICKS 10000
+#define SIM_STARTING_SHEEP 10
+#define SIM_TICKS 10
+
+#define SIM_FOOD_SPAWN_RATE 1
+#define SIM_FOOD_MAX 1
+
+#define SIM_MAP_SIZE 1000
 
 #pragma endregion
 
+#pragma region Simulation Structs
+
+struct Sheep
+{
+    int age;
+    int gender;
+
+    double x;
+    double y;
+
+    double hunger;
+};
+
+struct Food
+{
+    double x;
+    double y;
+    double value;
+};
+
+#pragma endregion
+
+struct LinkedList *sheepList;
+struct LinkedList *foodList;
+
+double foodSpawnIndex = 0;
+
+double random_pos()
+{
+    return (double) rand() / RAND_MAX * SIM_MAP_SIZE;
+}
+
+void spawn_food()
+{
+    foodSpawnIndex += SIM_FOOD_SPAWN_RATE;
+
+    while (foodSpawnIndex >= 1 && foodList->count < SIM_FOOD_MAX)
+    {
+        struct Food * newFood = malloc(sizeof(struct Food));
+        newFood->x = random_pos();
+        newFood->y = random_pos();
+        AddToList(foodList, newFood);
+
+        foodSpawnIndex--;
+    }
+}
+
+struct Sheep* new_sheep()
+{
+    struct Sheep* sheep = malloc(sizeof(struct Sheep));
+    sheep->age = 0;
+    sheep->hunger = .5;
+
+    return sheep;
+}
+
+void kill_sheep(struct LinkedListNode * sheep)
+{
+    RemoveFromList(sheepList, sheep);
+}
+
+void tick(struct LinkedList *sheepList, struct LinkedList *foodList )
+{
+    struct LinkedListNode *sheepLHead = sheepList->tail;
+    while (sheepLHead->next != NULL)
+    {   
+        struct Sheep *sheep = (struct Sheep*) (sheepLHead->obj);
+        sheep->age++;
+        sheep->hunger -= SHEEP_STARVE_RATE;
+
+        if (sheep->hunger <= 0)
+        {
+            // Dead Sheep
+            kill_sheep(sheepLHead);
+            // printf("Sheep Dead");
+        }
+
+        sheepLHead = sheepLHead->next;
+    }
+
+    spawn_food();
+}
+
 int main()
 {
-    struct LinkedList sheepList = newList();
+    sheepList = newList();
+    foodList = newList();
 
     for (int i = 0; i < SIM_STARTING_SHEEP; i++)
     {
-        struct Sheep sheep;
-        sheep.age = i;
-        AddToList(&sheepList, (void*) &sheep);
-        printf("plz %d \n", ((struct Sheep*) (sheepList.tail->obj))->age);
+        struct Sheep *sheep = new_sheep();
+        sheep->x = random_pos();
+        sheep->y = random_pos();
+        AddToList(sheepList, (void*) sheep);
     }
 
-    printf("plzz %d \n", sheepList.head == NULL);
-
-    printf("Counted %d", countList(&sheepList));
+    for (int i = 0; i < SIM_TICKS; i++)
+    {
+        // printf("tick: %d\n", i);
+        tick(sheepList, foodList);
+    }
 
     return 0;
 }
