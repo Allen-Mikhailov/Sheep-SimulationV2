@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "iterator": "c",
-        "xutility": "c"
+        "xutility": "c",
+        "cstdlib": "c",
+        "cmath": "c"
     }
 }
