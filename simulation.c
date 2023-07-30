@@ -35,9 +35,9 @@
 #define SIM_TICKS 1000
 
 #define SIM_FOOD_SPAWN_RATE 10
-#define SIM_FOOD_MAX 10
+#define SIM_FOOD_MAX 100
 
-#define SIM_MAP_SIZE 100
+#define SIM_MAP_SIZE 1000
 
 #pragma endregion
 
@@ -94,9 +94,14 @@ double random_pos()
 
 double atanRange(double a)
 {
-    a = fmod(a, M_PI_2);
+    // printf("Inoput: %f\n", a);
+    a = fmod(a, M_PI*2);
+    // printf("FMOD: %f\n", a);
     if (a > M_PI)
-        return M_PI_2 - a;
+        return a - M_PI*2;
+    if (a < -M_PI)
+        return a + M_PI*2;
+
     return a;
 }
 
@@ -110,9 +115,9 @@ double compare_angles(double a1, double a2)
     double dif = a2-a1;
 
     if(dif < -M_PI)
-        dif += M_PI_2;
+        dif += M_PI*2;
     if(dif > M_PI)
-        dif -= M_PI_2;
+        dif -= M_PI*2;
     return dif;
 }
 
@@ -138,7 +143,7 @@ struct Sheep* new_sheep()
     struct Sheep* sheep = malloc(sizeof(struct Sheep));
     sheep->age = 0;
     sheep->hunger = .5;
-    sheep->a = (double) rand()/RAND_MAX * M_PI_2 - M_1_PI;
+    sheep->a = (double) rand()/RAND_MAX * M_PI*2 - M_PI;
 
     return sheep;
 }
@@ -212,16 +217,17 @@ void sheep_tick(struct LinkedListNode * sheepNode)
         MoveSpeed = 1;
     }
 
-    sheep->a = atanRange(sheep->a + TurnSpeed);
-    sheep->x = clamp(sheep->x + cos(sheep->a) * MoveSpeed, 0, SIM_MAP_SIZE);
-    sheep->y = clamp(sheep->y + sin(sheep->a) * MoveSpeed, 0, SIM_MAP_SIZE);
+    sheep->a = atanRange(sheep->a + TurnSpeed * SHEEP_MAX_TURN_SPEED);
+    // printf("Sheep Angle: %f\n", sheep->a);
+    sheep->x = clamp(sheep->x + cos(sheep->a) * MoveSpeed * SHEEP_MAX_SPEED, 0, SIM_MAP_SIZE);
+    sheep->y = clamp(sheep->y + sin(sheep->a) * MoveSpeed * SHEEP_MAX_SPEED, 0, SIM_MAP_SIZE);
 
     // Eating
     if (vision->nFoodDist < SHEEP_EATING_RANGE)
     {
         sheep->hunger = 1;
         RemoveFromList(foodList, vision->nFood);
-        printf("Sheep ate food");
+        // printf("Sheep ate food");
     }
 
     // Hunger
@@ -238,7 +244,7 @@ void move_cursor(int x, int y)
 
 void display_tick()
 {
-    move_cursor(0, 0);
+    // move_cursor(0, 0);
     char display[DISPLAY_BUFFER_LENGTH+1];
 
     // Space Fill
@@ -275,14 +281,16 @@ void display_tick()
     {
         struct Sheep *sheep = ( struct Sheep *)(sheepLHead->obj);
 
-        #define SHEEP_BUFFER_X ((int) (sheep->x*displayScale))
-        #define SHEEP_BUFFER_Y ((int) (sheep->y*displayScale))
+        #define SHEEP_BUFFER_X ((int) clamp(sheep->x*displayScale, 0, DISPLAY_SIZE-1))
+        #define SHEEP_BUFFER_Y ((int) clamp(sheep->y*displayScale, 0, DISPLAY_SIZE-1))
 
         int bufferIndex = SHEEP_BUFFER_X + (SHEEP_BUFFER_Y * (DISPLAY_SIZE + 1));
         display[bufferIndex] = DISPLAY_SHEEP_CHAR;
         sheepLHead = sheepLHead->next;
     }
 
+    move_cursor(0, 0);
+    // printf("\033[0;0H");
     printf((char*)&display);
 }
 
