@@ -1,4 +1,5 @@
 #include <stdio.h> 
+#include <time.h>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -31,21 +32,20 @@
 
 #pragma region Simulation Constants
 
-#define SIM_STARTING_SHEEP 5
-#define SIM_TICKS 1000
+#define SIM_STARTING_SHEEP 100
+#define SIM_TICKS 10000
+#define SIM_PERCENT .01
 
 #define SIM_FOOD_SPAWN_RATE 10
-#define SIM_FOOD_MAX 100
+#define SIM_FOOD_MAX 1000
 
 #define SIM_MAP_SIZE 1000
 
 #pragma endregion
 
-#pragma region Simulation Structs
-
 #pragma region Display Constants
 
-#define DISPLAY
+// #define DISPLAY
 
 #define DISPLAY_SIZE 10
 #define DISPLAY_BUFFER_LENGTH DISPLAY_SIZE*(DISPLAY_SIZE+1)
@@ -54,6 +54,10 @@
 #define DISPLAY_SHEEP_CHAR 'O'
 
 #pragma endregion
+
+#define CHARS_PER_INT 8
+
+#pragma region Simulation Structs
 
 struct Sheep
 {
@@ -65,6 +69,10 @@ struct Sheep
     double a;
 
     double hunger;
+
+    int lookingForMate;
+    struct Sheep *mate;
+    int pregnantPeriod;
 };
 
 struct Food
@@ -86,6 +94,8 @@ struct LinkedList *sheepList;
 struct LinkedList *foodList;
 
 double foodSpawnIndex = 0;
+
+#pragma region Math functions
 
 double random_pos()
 {
@@ -121,6 +131,8 @@ double compare_angles(double a1, double a2)
     return dif;
 }
 
+#pragma endregion
+
 void spawn_food()
 {
     foodSpawnIndex += SIM_FOOD_SPAWN_RATE;
@@ -143,16 +155,18 @@ struct Sheep* new_sheep()
     struct Sheep* sheep = malloc(sizeof(struct Sheep));
     sheep->age = 0;
     sheep->hunger = .5;
-    sheep->a = (double) rand()/RAND_MAX * M_PI*2 - M_PI;
+    sheep->a = (double) ( rand() / RAND_MAX ) * M_PI*2 - M_PI;
+    sheep->pregnantPeriod = -1;
+    sheep->gender = floor((double)rand()/RAND_MAX * 2);
 
     return sheep;
 }
 
 void kill_sheep(struct LinkedListNode * sheep)
 {
-    // RemoveFromList(sheepList, sheep);
-    // free(sheep->obj);
-    // free(sheep);
+    RemoveFromList(sheepList, sheep);
+    free(sheep->obj);
+    free(sheep);
 }
 
 struct SheepVision
@@ -164,14 +178,11 @@ struct SheepVision
 
 void sheep_vision(struct Sheep * sheep, struct SheepVision *vision)
 {
+
      // Food Vision
     vision->nFood = NULL;
     vision->nFoodDist = SHEEP_VIEW_DISTANCE;
     struct LinkedListNode *foodLHead = foodList->tail;
-
-    // if (foodLHead == NULL)
-    //     return;
-
     while (foodLHead != NULL)
     {  
         struct Food *food = (struct Food *) (foodLHead->obj);
@@ -191,6 +202,65 @@ void sheep_vision(struct Sheep * sheep, struct SheepVision *vision)
     }
 }
 
+void Birth(struct Sheep * s1)
+{
+    struct Sheep *newSheep = new_sheep();
+    newSheep->x = s1->x;
+    newSheep->y = s1->y;
+
+    AddToList(sheepList, newSheep);
+}
+
+void female_sheep_tick(struct LinkedListNode * sheepNode)
+{
+    clock_t start = clock();
+    struct Sheep *sheep = (struct Sheep*) (sheepNode->obj);
+    if (sheep->age < SHEEP_EGG_MIN_AGE) {return;}
+
+    if (!sheep->lookingForMate) 
+    {
+        if (floor((double) rand() / RAND_MAX * SHEEP_EGG_CHANCE) == 0)
+            sheep->lookingForMate = 1;
+    } 
+    else if (sheep->pregnantPeriod == -1)
+    {
+        // Looking for a mate
+        struct Sheep *closestPartner = NULL;
+        double distance = SHEEP_MATE_DISTANCE;
+
+        struct LinkedListNode *sheepLHead = sheepList->tail;
+        while (sheepLHead != NULL)
+        {
+            struct Sheep *s2 = (struct Sheep *) (sheepLHead->obj);
+            double dist = hypot(sheep->x-s2->x, sheep->y-s2->y);
+            if (s2->gender == 0 && dist < distance )
+            {
+                distance = dist;
+                closestPartner = s2;
+            }
+            sheepLHead = sheepLHead->next;
+        }
+
+        if (closestPartner != NULL)
+        {
+            // Cloning Sheep Data
+            struct Sheep s2 = *closestPartner;
+
+            sheep->mate = &s2;
+            sheep->pregnantPeriod = 0;
+        }
+    } else {
+        // printf("Pregnant");
+        sheep->pregnantPeriod++;
+        if (sheep->pregnantPeriod >= SHEEP_PREGNANT_PERIOD && sheep->hunger > SHEEP_PREGNANT_HUNGER_COST)
+        {
+            Birth(sheep);
+            sheep->pregnantPeriod = -1;
+            sheep->lookingForMate = 1;
+        }
+    }
+}
+
 void sheep_tick(struct LinkedListNode * sheepNode)
 {
     struct Sheep *sheep = (struct Sheep*) (sheepNode->obj);
@@ -205,8 +275,6 @@ void sheep_tick(struct LinkedListNode * sheepNode)
     struct SheepVision *vision = &vis;
     sheep_vision(sheep, vision);
 
-    
-
     // TEMP AI
     if (vision->nFood == NULL)
     {
@@ -217,8 +285,8 @@ void sheep_tick(struct LinkedListNode * sheepNode)
         MoveSpeed = 1;
     }
 
+    // Movement
     sheep->a = atanRange(sheep->a + TurnSpeed * SHEEP_MAX_TURN_SPEED);
-    // printf("Sheep Angle: %f\n", sheep->a);
     sheep->x = clamp(sheep->x + cos(sheep->a) * MoveSpeed * SHEEP_MAX_SPEED, 0, SIM_MAP_SIZE);
     sheep->y = clamp(sheep->y + sin(sheep->a) * MoveSpeed * SHEEP_MAX_SPEED, 0, SIM_MAP_SIZE);
 
@@ -229,6 +297,9 @@ void sheep_tick(struct LinkedListNode * sheepNode)
         RemoveFromList(foodList, vision->nFood);
         // printf("Sheep ate food");
     }
+
+    if (sheep->gender == 1)
+        female_sheep_tick(sheepNode);
 
     // Hunger
     sheep->hunger -= SHEEP_STARVE_RATE;
@@ -296,7 +367,7 @@ void display_tick()
 
 #pragma endregion 
 
-void tick(struct LinkedList *sheepList, struct LinkedList *foodList )
+void tick(struct LinkedList *sheepList, struct LinkedList *foodList, struct TickData * tData )
 {
     struct LinkedListNode *sheepLHead = sheepList->tail;
     while (sheepLHead != NULL)
@@ -306,7 +377,10 @@ void tick(struct LinkedList *sheepList, struct LinkedList *foodList )
         sheepLHead = nextSheep;
     }
 
-    spawn_food();
+    spawn_food();   
+
+    tData->sheepCount = sheepList->count;
+    tData->grassCount = foodList->count;
 
     #ifdef DISPLAY
     display_tick();
@@ -318,21 +392,61 @@ int main()
     sheepList = newList();
     foodList = newList();
 
+    // Tick Data
+    struct TickData *tDataList = malloc(sizeof(struct TickData)*SIM_TICKS);
+    struct TickData *tDataHead = tDataList;
+
+    // Obj Set up
     for (int i = 0; i < SIM_STARTING_SHEEP; i++)
     {
         struct Sheep *sheep = new_sheep();
         sheep->x = random_pos();
         sheep->y = random_pos();
-        AddToList(sheepList, (void*) sheep);
+        AddToList(sheepList, sheep);
     }
 
+    // Running simulation
+    printf("Started Simulation\n");
+
+    double lastPercent = 0;
     for (int i = 0; i < SIM_TICKS; i++)
     {
         // printf("tick: %d\n", i);
-        tick(sheepList, foodList);
+        tick(sheepList, foodList, tDataHead);
+        tDataHead++;
+
+        double percent = floor((double) i / SIM_TICKS * (1/SIM_PERCENT))*SIM_PERCENT;
+        if (lastPercent != percent)
+        {
+            lastPercent = percent;
+            printf("%f%% Sheep Count: %d\n", lastPercent*100, sheepList->count);
+        }
     }
 
     printf("Completed Simulation\n");
+
+    printf("Writing CSV\n");
+    FILE *fptr;
+    fptr = fopen("./data.csv","w");
+    if(fptr == NULL)
+    {
+        printf("Error!");   
+        exit(1);             
+    }
+
+    fprintf(fptr, "Sheep Count, Grass Count\n");
+
+    tDataHead = tDataList;
+
+    for (int i = 0; i < SIM_TICKS; i++)
+    {
+        fprintf(fptr, "%d,%d\n", tDataHead->sheepCount, tDataHead->grassCount);
+        tDataHead++;
+    }
+
+    fclose(fptr);
+
+    printf("Completed writing csv");
 
     return 0;
 }
