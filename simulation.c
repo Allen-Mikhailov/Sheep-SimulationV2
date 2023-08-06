@@ -19,7 +19,7 @@
 #define SHEEP_VIEW_DISTANCE 100
 #define SHEEP_VIEW_ANGLE (M_1_PI / 4)
 
-#define SHEEP_MAX_LIFE_SPAN 30000
+#define SHEEP_MAX_LIFE_SPAN 1000
 
 #define SHEEP_EGG_MIN_AGE 100
 #define SHEEP_EGG_CHANCE 100
@@ -40,6 +40,8 @@
 #define SIM_FOOD_MAX 1000
 
 #define SIM_MAP_SIZE 1000
+
+#define SIM_GRASS_CHUNK_SIZE SHEEP_VIEW_DISTANCE
 
 #pragma endregion
 
@@ -80,6 +82,10 @@ struct Food
     double x;
     double y;
     double value;
+
+    struct LinkedList *chunk;
+    struct LinkedListNode * mainListNode;
+    struct LinkedListNode * chunkListNode;
 };
 
 struct TickData
@@ -92,6 +98,13 @@ struct TickData
 
 struct LinkedList *sheepList;
 struct LinkedList *foodList;
+
+struct LinkedList *grassChunks;
+int chunks;
+
+const int chunkRadiusX[] = {0, 0, 0, -1, -1, -1, 1, 1, 1};
+const int chunkRadiusY[] = {0, 1, -1, 0, 1, -1, 0, 1, -1};
+
 
 double foodSpawnIndex = 0;
 
@@ -133,6 +146,14 @@ double compare_angles(double a1, double a2)
 
 #pragma endregion
 
+int get_chunk(double x, double y)
+{
+    int cx = clamp(floor(x/SIM_GRASS_CHUNK_SIZE) + 1, 1, chunks);
+    int cy = clamp(floor(y/SIM_GRASS_CHUNK_SIZE) + 1, 1, chunks);
+
+    return cx + cy * (chunks+2);
+}
+
 void spawn_food()
 {
     foodSpawnIndex += SIM_FOOD_SPAWN_RATE;
@@ -142,7 +163,13 @@ void spawn_food()
         struct Food * newFood = malloc(sizeof(struct Food));
         newFood->x = random_pos();
         newFood->y = random_pos();
-        AddToList(foodList, newFood);
+        newFood->mainListNode = AddToList(foodList, newFood);
+
+        // Chunk
+        int chunk = get_chunk(newFood->x, newFood->y);
+        struct LinkedList* grassChunk = grassChunks+chunk;
+        newFood->chunk = grassChunk;
+        newFood->chunkListNode = AddToList(grassChunk, newFood);
 
         foodSpawnIndex--;
     }
@@ -171,7 +198,7 @@ void kill_sheep(struct LinkedListNode * sheep)
 
 struct SheepVision
 {
-    struct LinkedListNode *nFood;
+    struct Food *nFood;
     double nFoodDist;
     double nFoodAngle;
 };
@@ -182,23 +209,32 @@ void sheep_vision(struct Sheep * sheep, struct SheepVision *vision)
      // Food Vision
     vision->nFood = NULL;
     vision->nFoodDist = SHEEP_VIEW_DISTANCE;
-    struct LinkedListNode *foodLHead = foodList->tail;
-    while (foodLHead != NULL)
-    {  
-        struct Food *food = (struct Food *) (foodLHead->obj);
-        
-        double distance = hypot(sheep->x - food->x, sheep->y - food->y);
-        double angle = atan2(food->y - sheep->y, food->x - sheep->x);
-        double angleDif = compare_angles(sheep->a, angle);
 
-        if (distance < vision->nFoodDist && fabs(angleDif) < SHEEP_VIEW_ANGLE)
-        {
-            vision->nFood = foodLHead;
-            vision->nFoodDist = distance;
-            vision->nFoodAngle = angleDif;
+    int sChunk = get_chunk(sheep->x, sheep->y);
+
+    for (int i = 0; i < 9; i++)
+    {
+        int lsChunk = sChunk + chunkRadiusX[i] + chunkRadiusY[i] * (chunks+2);
+        struct LinkedList * grassChunk = grassChunks + lsChunk;
+        struct LinkedListNode *foodLHead = grassChunk->tail;
+
+        while (foodLHead != NULL)
+        {  
+            struct Food *food = (struct Food *) (foodLHead->obj);
+            
+            double distance = hypot(sheep->x - food->x, sheep->y - food->y);
+            double angle = atan2(food->y - sheep->y, food->x - sheep->x);
+            double angleDif = compare_angles(sheep->a, angle);
+
+            if (distance < vision->nFoodDist && fabs(angleDif) < SHEEP_VIEW_ANGLE)
+            {
+                vision->nFood = foodLHead->obj;
+                vision->nFoodDist = distance;
+                vision->nFoodAngle = angleDif;
+            }
+
+            foodLHead = foodLHead->next;
         }
-
-        foodLHead = foodLHead->next;
     }
 }
 
@@ -294,7 +330,9 @@ void sheep_tick(struct LinkedListNode * sheepNode)
     if (vision->nFoodDist < SHEEP_EATING_RANGE)
     {
         sheep->hunger = 1;
-        RemoveFromList(foodList, vision->nFood);
+        RemoveFromList(foodList, vision->nFood->mainListNode);
+        RemoveFromList(vision->nFood->chunk, vision->nFood->chunkListNode);
+        // RemoveFromList(vision->nFood)
         // printf("Sheep ate food");
     }
 
@@ -382,6 +420,8 @@ void tick(struct LinkedList *sheepList, struct LinkedList *foodList, struct Tick
     tData->sheepCount = sheepList->count;
     tData->grassCount = foodList->count;
 
+
+
     #ifdef DISPLAY
     display_tick();
     #endif
@@ -389,8 +429,20 @@ void tick(struct LinkedList *sheepList, struct LinkedList *foodList, struct Tick
 
 int main()
 {
+    printf("Setting up simulation...\n");
     sheepList = newList();
     foodList = newList();
+
+    // Creating Grass Chunks
+    chunks = ceil((double) SIM_MAP_SIZE / SIM_GRASS_CHUNK_SIZE);
+    printf("Chunk count: %d\n", (chunks+2) * (chunks+2));
+    grassChunks = malloc(sizeof(struct LinkedList) * (chunks+2) * (chunks+2));
+    struct LinkedList *grassChunksHead = grassChunks;
+    for (int i = 0; i < (chunks+2) * (chunks+2); i++)
+    {
+        startList(grassChunksHead);
+        grassChunksHead++;
+    }
 
     // Tick Data
     struct TickData *tDataList = malloc(sizeof(struct TickData)*SIM_TICKS);

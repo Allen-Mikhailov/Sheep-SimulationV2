@@ -16,18 +16,23 @@ struct LinkedListNode
     int t;
 };
 
-struct LinkedList * newList()
+void startList(struct LinkedList * list)
 {
-    struct LinkedList *list = malloc(sizeof(struct LinkedList));
     list->head = NULL;
     list->tail = NULL;
     list->count = 0;
+}
+
+struct LinkedList * newList()
+{
+    struct LinkedList *list = malloc(sizeof(struct LinkedList));
+    startList(list);
     return list;
 }
 
-void AddToList(struct LinkedList * list, void* obj)
+struct LinkedListNode * AddToList(struct LinkedList * list, void* obj)
 {
-    struct LinkedListNode *newNode = malloc(sizeof(struct LinkedListNode));
+    struct LinkedListNode * newNode = malloc(sizeof(struct LinkedListNode));
     newNode->obj = obj;
     newNode->previous = list->head;
     newNode->next = NULL;
@@ -41,6 +46,7 @@ void AddToList(struct LinkedList * list, void* obj)
         list->head = newNode;
         list->tail = newNode;
     }
+    return newNode;
 }
 
 void RemoveFromList(struct LinkedList * list, struct LinkedListNode * node)
