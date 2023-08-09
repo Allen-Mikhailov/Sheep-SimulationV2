@@ -36,7 +36,7 @@
 #define SIM_TICKS 10000
 #define SIM_PERCENT .01
 
-#define SIM_FOOD_SPAWN_RATE 10
+#define SIM_FOOD_SPAWN_RATE 100
 #define SIM_FOOD_MAX 1000
 
 #define SIM_MAP_SIZE 1000
@@ -107,6 +107,8 @@ const int chunkRadiusY[] = {0, 1, -1, 0, 1, -1, 0, 1, -1};
 
 
 double foodSpawnIndex = 0;
+
+double sheepVisionTime = 0;
 
 #pragma region Math functions
 
@@ -205,6 +207,7 @@ struct SheepVision
 
 void sheep_vision(struct Sheep * sheep, struct SheepVision *vision)
 {
+    clock_t t = clock();
 
      // Food Vision
     vision->nFood = NULL;
@@ -236,6 +239,8 @@ void sheep_vision(struct Sheep * sheep, struct SheepVision *vision)
             foodLHead = foodLHead->next;
         }
     }
+
+    sheepVisionTime += ( (double) clock() - t ) / CLOCKS_PER_SEC;
 }
 
 void Birth(struct Sheep * s1)
@@ -430,12 +435,12 @@ void tick(struct LinkedList *sheepList, struct LinkedList *foodList, struct Tick
 int main()
 {
     printf("Setting up simulation...\n");
+    clock_t setupStart = clock();
     sheepList = newList();
     foodList = newList();
 
     // Creating Grass Chunks
     chunks = ceil((double) SIM_MAP_SIZE / SIM_GRASS_CHUNK_SIZE);
-    printf("Chunk count: %d\n", (chunks+2) * (chunks+2));
     grassChunks = malloc(sizeof(struct LinkedList) * (chunks+2) * (chunks+2));
     struct LinkedList *grassChunksHead = grassChunks;
     for (int i = 0; i < (chunks+2) * (chunks+2); i++)
@@ -458,20 +463,39 @@ int main()
     }
 
     // Running simulation
-    printf("Started Simulation\n");
+    printf("Started Simulation %fs\n", (setupStart-clock())/CLOCKS_PER_SEC);
 
     double lastPercent = 0;
+    double lastVisionTime = 0;
     for (int i = 0; i < SIM_TICKS; i++)
     {
         // printf("tick: %d\n", i);
         tick(sheepList, foodList, tDataHead);
         tDataHead++;
 
+        // grassChunksHead = grassChunks;
+        // for (int i = 0; i < chunks+2; i++)
+        // {
+        //     for (int j = 0; j < chunks+2; j++)
+        //     {
+        //         printf("%d ", grassChunksHead->count);
+        //         grassChunksHead++;
+        //     }
+        //     printf("\n");
+        // }
+
         double percent = floor((double) i / SIM_TICKS * (1/SIM_PERCENT))*SIM_PERCENT;
         if (lastPercent != percent)
         {
             lastPercent = percent;
-            printf("%f%% Sheep Count: %d\n", lastPercent*100, sheepList->count);
+            printf("%f%%", lastPercent*100);
+            printf(" Sheep Count: %d", sheepList->count);
+            printf(" Grass Count: %d", foodList->count);
+            printf(" Vision Time: %f +%f", sheepVisionTime, (sheepVisionTime-lastVisionTime)/SIM_TICKS*100);
+            printf("\n");
+            // printf("%f%% Sheep Count: %d Vision Time : %f\n", lastPercent*100, sheepList->count, sheepVisionTime);
+
+            lastVisionTime = sheepVisionTime;
         }
     }
 
