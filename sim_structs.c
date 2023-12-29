@@ -1,12 +1,14 @@
 // Replay Tokens
-#define R_TICK_START 0
+#define R_SIM_START 0
 #define R_SIM_TICKS 1
 
-#define R_SHEEP_COUNT 6
-#define R_SHEEP_START 2
-#define R_SHEEP_X 3
-#define R_SHEEP_Y 4
-#define R_SHEEP_ROT 5
+#define R_TICK_END 6
+
+#define R_SHEEP_COUNT 2
+#define R_FOOD_COUNT  3
+
+#define R_MAP_X 4
+#define R_MAP_Y 5
 
 struct Sheep
 {

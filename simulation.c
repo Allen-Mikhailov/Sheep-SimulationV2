@@ -69,6 +69,7 @@ int chunks;
 const int chunkRadiusX[] = {0, 0, 0, -1, -1, -1, 1, 1, 1};
 const int chunkRadiusY[] = {0, 1, -1, 0, 1, -1, 0, 1, -1};
 
+FILE *rfp;
 
 double foodSpawnIndex = 0;
 
@@ -396,11 +397,6 @@ void tick(struct LinkedList *sheepList, struct LinkedList *foodList, struct Tick
     #endif
 }
 
-void write_to_replay(FILE *fp, int token, double value)
-{
-    fprintf(fp, "%d %f\n", token, value);
-}
-
 int main()
 {
     printf("Setting up simulation...\n");
@@ -432,9 +428,8 @@ int main()
     }
 
     printf("Opening Replay\n");
-    FILE *rfptr;
-    rfptr = fopen("./replay.sim","w");
-    write_to_replay(rfptr, R_SIM_TICKS, SIM_TICKS);
+    rfp = fopen("./replay.sim","w");
+    fprintf(rfp, "%d %d", R_SIM_TICKS, SIM_TICKS);
 
     // Running simulation
     printf("Started Simulation %fs\n", (setupStart-clock())/CLOCKS_PER_SEC);
@@ -446,9 +441,8 @@ int main()
         // printf("tick: %d\n", i);
         tick(sheepList, foodList, tDataHead);
         tDataHead++;
-
-        write_to_replay(rfptr, R_TICK_START, i);
         
+        fprintf(rfp, "%d %d", R_SIM_TICKS, SIM_TICKS);
 
         // grassChunksHead = grassChunks;
         // for (int i = 0; i < chunks+2; i++)

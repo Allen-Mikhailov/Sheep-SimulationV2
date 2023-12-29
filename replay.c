@@ -12,6 +12,9 @@
 FILE *rfp;
 int current_tick = 0;
 
+int map_x;
+int map_y;
+
 struct Tick {
     struct Sheep *sheep;
     int sheep_count;
@@ -26,16 +29,30 @@ int tick_count = 0;
 
 void ReadReplay()
 {
-    int token = 0;
+    // First Variables
+    int token;
     double value;
-
-    while (fscanf(rfp, "%d %f", &token, &value))
+    while (fscanf(rfp, "%d, %f") != NULL)
     {
         switch (token)
         {
-
+            case R_MAP_X:
+                map_x = (int) value;
+                break;
+            case R_MAP_Y:
+                map_y = (int) value;
+                break;
+            case R_SIM_TICKS:
+                tick_count = (int) value;
+                break;
         }
     }
+
+    int sim_ticks;
+    fscanf(rfp, "%d", &sim_ticks);
+    printf("SIM_TICKS: %d", sim_ticks);
+
+    
 }
 
 void PaintTick()
