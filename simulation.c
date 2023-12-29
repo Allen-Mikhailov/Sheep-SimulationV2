@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "LinkedLists.c"
+#include "sim_structs.c"
 
 #pragma region Sheep constants
 
@@ -33,7 +34,7 @@
 #pragma region Simulation Constants
 
 #define SIM_STARTING_SHEEP 100
-#define SIM_TICKS 10000
+#define SIM_TICKS 100
 #define SIM_PERCENT .01
 
 #define SIM_FOOD_SPAWN_RATE 100
@@ -58,43 +59,6 @@
 #pragma endregion
 
 #define CHARS_PER_INT 8
-
-#pragma region Simulation Structs
-
-struct Sheep
-{
-    int age;
-    int gender;
-
-    double x;
-    double y;
-    double a;
-
-    double hunger;
-
-    int lookingForMate;
-    struct Sheep *mate;
-    int pregnantPeriod;
-};
-
-struct Food
-{
-    double x;
-    double y;
-    double value;
-
-    struct LinkedList *chunk;
-    struct LinkedListNode * mainListNode;
-    struct LinkedListNode * chunkListNode;
-};
-
-struct TickData
-{
-    int sheepCount;
-    int grassCount;
-};
-
-#pragma endregion
 
 struct LinkedList *sheepList;
 struct LinkedList *foodList;
@@ -432,6 +396,11 @@ void tick(struct LinkedList *sheepList, struct LinkedList *foodList, struct Tick
     #endif
 }
 
+void write_to_replay(FILE *fp, int token, double value)
+{
+    fprintf(fp, "%d %f\n", token, value);
+}
+
 int main()
 {
     printf("Setting up simulation...\n");
@@ -462,6 +431,11 @@ int main()
         AddToList(sheepList, sheep);
     }
 
+    printf("Opening Replay\n");
+    FILE *rfptr;
+    rfptr = fopen("./replay.sim","w");
+    write_to_replay(rfptr, R_SIM_TICKS, SIM_TICKS);
+
     // Running simulation
     printf("Started Simulation %fs\n", (setupStart-clock())/CLOCKS_PER_SEC);
 
@@ -472,6 +446,9 @@ int main()
         // printf("tick: %d\n", i);
         tick(sheepList, foodList, tDataHead);
         tDataHead++;
+
+        write_to_replay(rfptr, R_TICK_START, i);
+        
 
         // grassChunksHead = grassChunks;
         // for (int i = 0; i < chunks+2; i++)
