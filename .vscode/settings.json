@@ -3,6 +3,7 @@
         "iterator": "c",
         "xutility": "c",
         "cstdlib": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "stdio.h": "c"
     }
 }
