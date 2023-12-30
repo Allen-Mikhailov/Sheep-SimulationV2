@@ -2,7 +2,7 @@
 set version=1.0.0
 set scriptFolder=%~dp0
 
-set buildIndex=src\main.c
+set buildIndex=src\window.c
 set buildName=build\simulation.exe
 
 echo Starting build

@@ -1,8 +1,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <commctrl.h>
-
-int init();
+#include "simulation.c"
 
 #define MENU_SIM_START 1 
 #define MENU_REPLAY_START 2
@@ -64,8 +63,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // Set the menu for the window
     SetMenu(hwnd, hMenu);
 
-    init();
-
     // Show the window
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
@@ -92,6 +89,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 case MENU_SIM_START:
                     // Code for handling Menu Item 1
                     printf("Simulation Start");
+                    run_simulation();
                     break;
                 case MENU_REPLAY_START:
                     // Code for handling Menu Item 2

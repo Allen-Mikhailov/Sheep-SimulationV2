@@ -3,6 +3,8 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include "math_util.c"
+
 #include "LinkedLists.c"
 #include "structs.c"
 #include "replay_util.c"
@@ -11,6 +13,8 @@ struct SimSettings *ss;
 
 struct LinkedList *sheepList;
 struct LinkedList *foodList;
+
+int totalSheepCreated = 0;
 
 struct LinkedList *grassChunks;
 int chunks;
@@ -21,8 +25,12 @@ const int chunkRadiusY[] = {0, 1, -1, 0, 1, -1, 0, 1, -1};
 FILE *rfp;
 
 double foodSpawnIndex = 0;
-
 double sheepVisionTime = 0;
+
+double random_pos()
+{
+    return (double) rand() / RAND_MAX * ss->sim_map_size;
+}
 
 int get_chunk(double x, double y)
 {
@@ -60,9 +68,12 @@ struct Sheep* new_sheep()
     struct Sheep* sheep = malloc(sizeof(struct Sheep));
     sheep->age = 0;
     sheep->hunger = .5;
+    
     sheep->a = (double) ( rand() / RAND_MAX ) * M_PI*2 - M_PI;
     sheep->pregnantPeriod = -1;
     sheep->gender = floor((double)rand()/RAND_MAX * 2);
+    sheep->id = totalSheepCreated;
+    totalSheepCreated++;
 
     return sheep;
 }
@@ -169,7 +180,8 @@ void female_sheep_tick(struct LinkedListNode * sheepNode)
     } else {
         // printf("Pregnant");
         sheep->pregnantPeriod++;
-        if (sheep->pregnantPeriod >= ss->sheep_pregnant_period && sheep->hunger > ss->sheep_pregnant_hunger_cost)
+        if (sheep->pregnantPeriod >= ss->sheep_pregnant_period 
+            && sheep->hunger > ss->sheep_pregnant_hunger_cost)
         {
             Birth(sheep);
             sheep->pregnantPeriod = -1;
@@ -272,18 +284,47 @@ void write_sim_settings(FILE *fp, struct SimSettings *s)
 void write_sheep_states(FILE *fp)
 {
     struct LinkedListNode *sheepLHead = sheepList->tail;
+    struct Sheep *sheep;
+    fprintf(fp, "%d ", sheepList->count);
     while (sheepLHead != NULL)
     {   
         struct LinkedListNode *nextSheep = sheepLHead->next;
-        // X Y Rot Age Gender Hunger LookingForMate MateId PregnantPeriod
-        fprintf(fp, "%f %f %f %d %d %f %d %d");
+        sheep = (struct Sheep *) sheepLHead->obj;
+        // Id, X Y Rot Age Gender Hunger LookingForMate MateId PregnantPeriod
+
+        int mateId = -1;
+        if (sheep->pregnantPeriod != -1)
+            mateId = sheep->mate->id;
+
+        fprintf(fp, "%d %f %f %f %d %d %f %d %d %d ", 
+            sheep->id,
+            sheep->x,
+            sheep->y,
+            sheep->a,
+            sheep->age,
+            sheep->gender,
+            sheep->hunger,
+            sheep->lookingForMate,
+            mateId,
+            sheep->pregnantPeriod
+        );
 
         sheepLHead = nextSheep;
     }
 }
 
+void refresh_replay_pointer()
+{
+    fclose(rfp);
+    rfp = fopen("./replay.sim","a");
+}
+
 int run_simulation()
 {
+    struct SimSettings settings;
+    ss = &settings;
+    getDefaultSettings(ss);
+
     printf("Setting up simulation...\n");
     clock_t setupStart = clock();
     sheepList = newList();
@@ -304,9 +345,15 @@ int run_simulation()
     struct TickData *tDataHead = tDataList;
 
     printf("Opening Replay\n");
+
     rfp = fopen("./replay.sim","w");
 
     write_sim_settings(rfp, ss);
+    write_token(rfp, R_SIM_START, 0);
+
+    refresh_replay_pointer();
+
+    printf("Wrote replay pointers\n");
 
     // Obj Set up
     for (int i = 0; i < ss->sim_starting_sheep; i++)
@@ -317,10 +364,14 @@ int run_simulation()
         AddToList(sheepList, sheep);
     }
 
+    printf("Setup inital Sheep\n");
+
     // Running simulation
     printf("Started Simulation %fs\n", (setupStart-clock())/CLOCKS_PER_SEC);
 
-    write_token(rfp, R_SIM_START, 0);
+    write_sheep_states(rfp);
+
+    printf("Wrote initial Sheep states\n");
 
     double lastPercent = 0;
     double lastVisionTime = 0;
@@ -329,6 +380,8 @@ int run_simulation()
         // printf("tick: %d\n", i);
         tick(sheepList, foodList, tDataHead);
         tDataHead++;
+
+        write_sheep_states(rfp);
         
         
 
@@ -350,7 +403,8 @@ int run_simulation()
             printf("%f%%", lastPercent*100);
             printf(" Sheep Count: %d", sheepList->count);
             printf(" Grass Count: %d", foodList->count);
-            printf(" Vision Time: %f +%f", sheepVisionTime, (sheepVisionTime-lastVisionTime)/ss->sim_ticks*100);
+            printf(" Vision Time: %f +%f", sheepVisionTime, 
+                (sheepVisionTime-lastVisionTime)/ss->sim_ticks*100);
             printf("\n");
             // printf("%f%% Sheep Count: %d Vision Time : %f\n", lastPercent*100, sheepList->count, sheepVisionTime);
 
