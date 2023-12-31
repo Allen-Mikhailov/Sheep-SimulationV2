@@ -2,8 +2,15 @@
 #define SHARED
 
 #include <windows.h>
+#include <dwmapi.h>
 #include <stdio.h>
 #include <commctrl.h>
+#include <time.h>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+#include "LinkedLists.c"
 
 #include "math_util.c"
 #include "structs.c"

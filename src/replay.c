@@ -21,26 +21,35 @@ int LoadReplay(FILE *fp)
 
     loaded_replay = TRUE;
     read_sim_settings(fp, &settings);
-    ticks = (struct Tick *) malloc(sizeof(struct Tick) * settings.sim_ticks);
+    ticks = (struct Tick *) malloc(sizeof(struct Tick) * settings.sim_ticks+1);
+
+    // Settings load test
+    FILE *tfp = fopen("./test.sim", "w");
+    write_sim_settings(tfp, &settings);
     
     struct Tick *tick_head = ticks;
-    for (int i = 0; i < settings.sim_ticks; i++)
+    for (int i = 0; i < settings.sim_ticks+1; i++)
     {
         int sheepCount = -1;
-        fscanf("%d ", &sheepCount);
+        fscanf(fp, "%d ", &sheepCount);
+        printf("Replay sheep count loaded: %d\n", sheepCount);
         tick_head->sheep_count = sheepCount;
 
-        if (sheepCount == -1)
+        if (sheepCount == -1) {
             printf("Failed to Load Sheep Count on tick %d", i);
             return 0;
+        }
 
-        tick_head->sheep = (struct Sheep *) malloc(sizeof(struct Tick) * sheepCount);
+        tick_head->sheep = (struct Sheep *) malloc(sizeof(struct Sheep) * sheepCount);
         struct Sheep *sheed_head = tick_head->sheep;
 
         for (int j = 0; j < sheepCount; j++)
         {
             int mateId;
             read_sheep(fp, sheed_head, &mateId);
+            sheed_head->x = 69;
+
+            sheed_head++;
         }
 
         tick_head++;
@@ -48,6 +57,8 @@ int LoadReplay(FILE *fp)
 }
 
 #define REPLAY_BACKGROUND_COLOR RGB(200, 200, 200)
+#define REPLAY_SHEEP_COLOR RGB(0, 0, 0)
+#define REPLAY_SHEEP_RADIUS 5
 
 void DrawReplay(HDC bitmap, int frame, int width, int height)
 {
@@ -59,5 +70,32 @@ void DrawReplay(HDC bitmap, int frame, int width, int height)
     FillRect(bitmap, &rect, backgroundBrush);
     DeleteObject(backgroundBrush);
 
+    HBRUSH sheepBrush = (HBRUSH) CreateSolidBrush(REPLAY_SHEEP_COLOR);
+    SelectObject(bitmap, sheepBrush);
 
+    // 0, 0 is bottom left
+    printf("sheep count, %d\n", tick->sheep_count);
+    printf("map size %f\n", settings.sim_map_size);
+    for (int i = 0; i < tick->sheep_count; i++)
+    {
+        struct Sheep *sheep = &tick->sheep[i];
+
+        double x = sheep->x/settings.sim_map_size * width;
+        double y = sheep->y/settings.sim_map_size * height;
+
+        printf("X: %f, Y: %f, x: %f, y: %f\n", x, y, sheep->x, sheep->y);
+
+        Ellipse(bitmap, 
+        x-REPLAY_SHEEP_RADIUS, 
+        height-(y-REPLAY_SHEEP_RADIUS),
+        x+REPLAY_SHEEP_RADIUS, 
+        height-(y+REPLAY_SHEEP_RADIUS)
+        );
+
+        MoveToEx(bitmap, x, height-y, NULL);
+
+        LineTo(bitmap, x + cos(sheep->a)*20, height-(y + sin(sheep->a)*20));
+    }
+
+    DeleteObject(backgroundBrush);
 }

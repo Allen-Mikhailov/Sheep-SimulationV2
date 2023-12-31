@@ -6,7 +6,7 @@ void write_token(FILE *fp, int token, double value)
     fprintf(fp, "%d %f ", token, value);
 }
 
-#define SIM_SETTINGS_SCAN_STRING "%f %f %f %f %f %f %f %f %f %f %f %f %f %d %d %f %d %f %f"
+#define SIM_SETTINGS_SCAN_STRING "%f %f %f %f %f %f %f %f %f %f %f %f %f %d %d %f %d %f %f\n"
 void write_sim_settings(FILE *fp, struct SimSettings *s)
 {
     fprintf(fp, SIM_SETTINGS_SCAN_STRING,
@@ -53,7 +53,7 @@ void read_sim_settings(FILE *fp, struct SimSettings *s)
         &s->sim_food_spawn_rate,
         &s->sim_food_max,
         &s->sim_grass_chunk_size,
-        &s->sim_map_size
+        &(s->sim_map_size)
     );
 }
 
@@ -80,15 +80,17 @@ void write_sheep(FILE *fp, struct Sheep * sheep)
 void read_sheep(FILE *fp, struct Sheep *sheep, int *mateId)
 {
     fscanf(fp, "%d %f %f %f %d %d %f %d %d %d ", 
-        &sheep->id,
-        &sheep->x,
-        &sheep->y,
-        &sheep->a,
-        &sheep->age,
-        &sheep->gender,
-        &sheep->hunger,
-        &sheep->lookingForMate,
+        &(sheep->id),
+        &(sheep->x),
+        &(sheep->y),
+        &(sheep->a),
+        &(sheep->age),
+        &(sheep->gender),
+        &(sheep->hunger),
+        &(sheep->lookingForMate),
         &mateId,
-        &sheep->pregnantPeriod
+        &(sheep->pregnantPeriod)
     );
+
+    printf("Read X: %f\n",sheep->x);
 }

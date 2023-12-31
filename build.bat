@@ -17,7 +17,7 @@ echo.
 echo Starting Build
 echo.
 
-gcc %buildIndex% -lcomctl32
+gcc %buildIndex% -lcomctl32 -lgdi32
 
 echo.
 echo Finished Build

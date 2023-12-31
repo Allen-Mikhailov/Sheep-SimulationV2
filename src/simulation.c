@@ -1,13 +1,4 @@
-#include <time.h>
-
-#define _USE_MATH_DEFINES
-#include <math.h>
-
-#include "math_util.c"
-
-#include "LinkedLists.c"
-#include "structs.c"
-#include "replay_util.c"
+#include "shared.c"
 
 struct SimSettings *ss;
 
@@ -309,6 +300,7 @@ int run_simulation()
     rfp = fopen("./replay.sim","w");
 
     write_sim_settings(rfp, ss);
+    fclose(rfp);
 
     refresh_replay_pointer();
 

@@ -86,7 +86,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     run_simulation();
                     break;
                 case MENU_REPLAY_START:
+                    printf("Draw replay\n");
                     // Code for handling Menu Item 2
+                    FILE *fp = fopen("./replay.sim", "r");
+                    LoadReplay(fp);
+                    fclose(fp);
+
+                    HDC hdc = GetDC(hwnd);
+                    DrawReplay(hdc, 0, 400, 400);
                     break;
                 // Add more cases as needed
             }
