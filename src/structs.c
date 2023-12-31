@@ -1,3 +1,8 @@
+#ifndef SIM_STRUCTS
+
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 struct Sheep
 {
     int age;
@@ -97,3 +102,7 @@ void getDefaultSettings(struct SimSettings *ss)
     ss->sim_map_size = 1000;
     ss->sim_grass_chunk_size = ss->sheep_view_distance;
 }
+
+#define SIM_STRUCTS
+
+#endif

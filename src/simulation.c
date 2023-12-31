@@ -258,29 +258,6 @@ void tick(struct LinkedList *sheepList, struct LinkedList *foodList, struct Tick
     tData->grassCount = foodList->count;
 }
 
-void write_sim_settings(FILE *fp, struct SimSettings *s)
-{
-    write_token(fp, R_SIM_TICKS, s->sim_ticks);
-    write_token(fp, R_SHEEP_STARVE_RATE, s->sheep_starve_rate);
-    write_token(fp, R_SHEEP_THIRST_RATE, s->sheep_thirst_rate);
-    write_token(fp, R_SHEEP_EATING_RANGE, s->sheep_eating_range);
-    write_token(fp, R_SHEEP_MAX_SPEED, s->sheep_max_speed);
-    write_token(fp, R_SHEEP_MAX_TURN_SPEED, s->sheep_max_turn_speed);
-    write_token(fp, R_SHEEP_VIEW_DISTANCE, s->sheep_view_distance);
-    write_token(fp, R_SHEEP_VIEW_ANGLE, s->sheep_view_angle);
-    write_token(fp, R_SHEEP_MAX_LIFESPAN, s->sheep_max_lifespan);
-    write_token(fp, R_SHEEP_EGG_MIN_AGE, s->sheep_egg_min_age);
-    write_token(fp, R_SHEEP_EGG_CHANCE, s->sheep_egg_chance);
-    write_token(fp, R_SHEEP_MATE_DISTANCE, s->sheep_mate_distance);
-    write_token(fp, R_SHEEP_PREGNANT_PERIOD, s->sheep_pregnant_period);
-    write_token(fp, R_SHEEP_PREGNANT_HUNGER_COST, s->sheep_pregnant_hunger_cost);
-    write_token(fp, R_SIM_STARTING_SHEEP, s->sim_starting_sheep);
-    write_token(fp, R_SIM_FOOD_SPAWN_RATE, s->sim_food_spawn_rate);
-    write_token(fp, R_SIM_FOOD_MAX, s->sim_food_max);
-    write_token(fp, R_SIM_GRASS_CHUNK_SIZE, s->sim_grass_chunk_size);
-    write_token(fp, R_SIM_MAP_SIZE, s->sim_map_size);
-}
-
 void write_sheep_states(FILE *fp)
 {
     struct LinkedListNode *sheepLHead = sheepList->tail;
@@ -290,25 +267,7 @@ void write_sheep_states(FILE *fp)
     {   
         struct LinkedListNode *nextSheep = sheepLHead->next;
         sheep = (struct Sheep *) sheepLHead->obj;
-        // Id, X Y Rot Age Gender Hunger LookingForMate MateId PregnantPeriod
-
-        int mateId = -1;
-        if (sheep->pregnantPeriod != -1)
-            mateId = sheep->mate->id;
-
-        fprintf(fp, "%d %f %f %f %d %d %f %d %d %d ", 
-            sheep->id,
-            sheep->x,
-            sheep->y,
-            sheep->a,
-            sheep->age,
-            sheep->gender,
-            sheep->hunger,
-            sheep->lookingForMate,
-            mateId,
-            sheep->pregnantPeriod
-        );
-
+        write_sheep(fp, sheep);
         sheepLHead = nextSheep;
     }
 }
