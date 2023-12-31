@@ -272,6 +272,7 @@ void write_sheep_states(FILE *fp)
     }
 }
 
+// Used to prevent errors as it allows us to see the log
 void refresh_replay_pointer()
 {
     fclose(rfp);
@@ -308,7 +309,6 @@ int run_simulation()
     rfp = fopen("./replay.sim","w");
 
     write_sim_settings(rfp, ss);
-    write_token(rfp, R_SIM_START, 0);
 
     refresh_replay_pointer();
 

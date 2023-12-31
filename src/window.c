@@ -1,14 +1,9 @@
-#include <windows.h>
-#include <stdio.h>
-#include <commctrl.h>
+#include "shared.c"
 #include "simulation.c"
+#include "replay.c"
 
 #define MENU_SIM_START 1 
 #define MENU_REPLAY_START 2
-
-HWND replay_window;
-HWND simulation_window;
-HWND simulation_settings_window;
 
 // Function prototypes
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -48,17 +43,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Create the menu bar
     HMENU hMenu = CreateMenu();
-    HMENU hSimMenu = CreatePopupMenu();
-    HMENU hReplayMenu = CreatePopupMenu();
+    HMENU hFileMenu = CreatePopupMenu();
+    HMENU hSimulationMenu = CreatePopupMenu();
 
     // Add menu items to the submenu
-    AppendMenu(hSimMenu, MF_STRING, MENU_SIM_START, "Start Simulation");
-    AppendMenu(hSimMenu, MF_STRING, 2, "Menu Item 2");
+    AppendMenu(hFileMenu, MF_STRING, MENU_REPLAY_START, "Open Replay");
 
-    AppendMenu(hReplayMenu, MF_STRING, MENU_REPLAY_START, "Start Replay");
+    AppendMenu(hSimulationMenu, MF_STRING, MENU_SIM_START, "Start Replay");
 
-    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hSimMenu,    "Simulation");
-    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hReplayMenu, "Replay");
+    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hFileMenu,    "File");
+    AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hSimulationMenu, "Simulation");
 
     // Set the menu for the window
     SetMenu(hwnd, hMenu);
