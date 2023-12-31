@@ -60,7 +60,7 @@ struct Sheep* new_sheep()
     sheep->age = 0;
     sheep->hunger = .5;
     
-    sheep->a = (double) ( rand() / RAND_MAX ) * M_PI*2 - M_PI;
+    sheep->a =  ( (double) rand() / RAND_MAX ) * M_PI*2 - M_PI;
     sheep->pregnantPeriod = -1;
     sheep->gender = floor((double)rand()/RAND_MAX * 2);
     sheep->id = totalSheepCreated;

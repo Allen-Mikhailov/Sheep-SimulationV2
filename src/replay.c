@@ -22,17 +22,12 @@ int LoadReplay(FILE *fp)
     loaded_replay = TRUE;
     read_sim_settings(fp, &settings);
     ticks = (struct Tick *) malloc(sizeof(struct Tick) * settings.sim_ticks+1);
-
-    // Settings load test
-    FILE *tfp = fopen("./test.sim", "w");
-    write_sim_settings(tfp, &settings);
     
     struct Tick *tick_head = ticks;
     for (int i = 0; i < settings.sim_ticks+1; i++)
     {
         int sheepCount = -1;
         fscanf(fp, "%d ", &sheepCount);
-        printf("Replay sheep count loaded: %d\n", sheepCount);
         tick_head->sheep_count = sheepCount;
 
         if (sheepCount == -1) {
@@ -47,8 +42,6 @@ int LoadReplay(FILE *fp)
         {
             int mateId;
             read_sheep(fp, sheed_head, &mateId);
-            sheed_head->x = 69;
-
             sheed_head++;
         }
 
@@ -82,8 +75,6 @@ void DrawReplay(HDC bitmap, int frame, int width, int height)
 
         double x = sheep->x/settings.sim_map_size * width;
         double y = sheep->y/settings.sim_map_size * height;
-
-        printf("X: %f, Y: %f, x: %f, y: %f\n", x, y, sheep->x, sheep->y);
 
         Ellipse(bitmap, 
         x-REPLAY_SHEEP_RADIUS, 
