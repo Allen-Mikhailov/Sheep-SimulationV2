@@ -2,8 +2,8 @@
 set version=1.0.0
 set scriptFolder=%~dp0
 
-set buildIndex=src\window.c
-set buildName=build\simulation.exe
+set buildEntry=src\window.c
+set buildOutput=build\simulation.exe
 
 echo Starting build
 
@@ -11,13 +11,13 @@ echo.
 echo Removing Existing Build
 echo.
 
-del %scriptFolder%\%buildName%
+del %scriptFolder%\%buildOutput%
 
 echo.
 echo Starting Build
 echo.
 
-gcc %buildIndex% -lcomctl32 -lgdi32
+gcc %scriptFolder%\%buildEntry% -lcomctl32 -lgdi32 -o%scriptFolder%\%buildOutput%
 
 echo.
 echo Finished Build

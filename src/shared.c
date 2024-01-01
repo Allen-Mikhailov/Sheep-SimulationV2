@@ -17,6 +17,12 @@
 #include "replay_util.c"
 #include "sprite_util.c"
 
+void pop_path(char* destination, char* path)
+{
+    // Finding the last slash
+    int index = strrchr(path, '\\') - path;
+    strncpy(destination, path, index);
+}
 
 // Replay Frame
 int replay_frame = 0;
