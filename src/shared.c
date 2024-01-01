@@ -15,6 +15,7 @@
 #include "math_util.c"
 #include "structs.c"
 #include "replay_util.c"
+#include "sprite_util.c"
 
 
 // Replay Frame
