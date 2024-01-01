@@ -98,7 +98,7 @@ void RequestReplayDraw(HWND hwnd)
     HBITMAP bitmap = createCompatibleBitmap(hdc, size, size);
     SelectObject(replay_hdc, bitmap);
 
-    DrawReplay(replay_hdc, 0, size, size);
+    DrawReplay(replay_hdc, replay_frame, size, size);
 
     // Drawing Replay
     BitBlt(hdc, horizontalPadding, vertialPadding, size, size, replay_hdc, 0, 0, SRCCOPY);
