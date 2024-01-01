@@ -5,7 +5,9 @@
 #define MENU_SIM_START 1 
 #define MENU_REPLAY_START 2
 #define MENU_REPLAY_NEXT_FRAME 3
-#define MENU_REPLAY_PREVIOUS_FRAME 4
+#define MENU_REPLAY_NEXT_10_FRAME 4
+#define MENU_REPLAY_PREVIOUS_FRAME 5
+#define MENU_REPLAY_PREVIOUS_10_FRAME 6
 
 
 // Function prototypes
@@ -54,7 +56,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     AppendMenu(hReplayMenu, MF_STRING, MENU_REPLAY_START, "Open Replay");
     AppendMenu(hReplayMenu, MF_STRING, MENU_REPLAY_NEXT_FRAME, "Next Frame");
+    AppendMenu(hReplayMenu, MF_STRING, MENU_REPLAY_NEXT_10_FRAME, "Next 10 Frames");
     AppendMenu(hReplayMenu, MF_STRING, MENU_REPLAY_PREVIOUS_FRAME, "Previous Frame");
+    AppendMenu(hReplayMenu, MF_STRING, MENU_REPLAY_PREVIOUS_10_FRAME, "Previous 10 Frames");
 
 
     AppendMenu(hMenu, MF_POPUP, (UINT_PTR)hSimulationMenu, "Simulation");
@@ -103,6 +107,18 @@ void RequestReplayDraw(HWND hwnd)
     // Drawing Replay
     BitBlt(hdc, horizontalPadding, vertialPadding, size, size, replay_hdc, 0, 0, SRCCOPY);
 
+    HFONT hFont = CreateFont(20, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS,
+                             CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Arial"));
+    SelectObject(hdc, hFont);
+    SetTextColor(hdc, RGB(0, 0, 255));
+
+    char buffer[20];
+    snprintf(buffer, sizeof(buffer), "FRAME: % 6d", replay_frame);
+
+    TextOut(hdc, horizontalPadding, vertialPadding-20, buffer, 14);
+
+    DeleteObject(hFont);
+
     ReleaseDC(hwnd, replay_hdc);
 }
 
@@ -127,13 +143,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 
                     RequestReplayDraw(hwnd);
                     break;
+                    
                 case MENU_REPLAY_NEXT_FRAME:
                     replay_frame = min(replay_frame+1, settings.sim_ticks);
                     RequestReplayDraw(hwnd);
-                    // DialogBoxW()
+                    break;
+                case MENU_REPLAY_NEXT_10_FRAME:
+                    replay_frame = min(replay_frame+10, settings.sim_ticks);
+                    RequestReplayDraw(hwnd);
                     break;
                 case MENU_REPLAY_PREVIOUS_FRAME:
                     replay_frame = max(replay_frame-1, 0);
+                    RequestReplayDraw(hwnd);
+                    break;
+                case MENU_REPLAY_PREVIOUS_10_FRAME:
+                    replay_frame = max(replay_frame-10, 0);
                     RequestReplayDraw(hwnd);
                     break;
 

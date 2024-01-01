@@ -4,6 +4,8 @@
         "xutility": "c",
         "cstdlib": "c",
         "cmath": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "string": "c",
+        "xstring": "c"
     }
 }
