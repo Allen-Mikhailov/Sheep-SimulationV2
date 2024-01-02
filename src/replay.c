@@ -41,7 +41,7 @@ int LoadReplay(FILE *fp)
         for (int j = 0; j < sheepCount; j++)
         {
             int mateId;
-            read_sheep(fp, sheed_head, &mateId);
+            read_variable_sheep(fp, sheed_head, &mateId);
             sheed_head++;
         }
 

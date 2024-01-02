@@ -5,7 +5,7 @@
 
 struct Sheep
 {
-    int age;
+    int start_tick;
     int gender;
 
     int id;

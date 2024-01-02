@@ -6,7 +6,7 @@ void write_token(FILE *fp, int token, double value)
     fprintf(fp, "%d %f ", token, value);
 }
 
-#define SIM_SETTINGS_WRITE_STRING "%f %f %f %f %f %f %f %f %f %f %f %f %f %d %d %f %d %f %f\n"
+#define SIM_SETTINGS_WRITE_STRING "%g %g %g %g %g %g %g %g %g %g %g %g %g %d %d %g %d %g %g\n"
 #define SIM_SETTINGS_SCAN_STRING  "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %d %d %lf %d %lf %lf\n"
 void write_sim_settings(FILE *fp, struct SimSettings *s)
 {
@@ -58,21 +58,41 @@ void read_sim_settings(FILE *fp, struct SimSettings *s)
     );
 }
 
-#define SHEEP_SCAN_STRING  "%d %lf %lf %lf %d %d %lf %d %d %d "
-#define SHEEP_WRITE_STRING "%d %.g %.g %.g %d %d %.g %d %d %d "
-void write_sheep(FILE *fp, struct Sheep * sheep)
+#define SHEEP_STATIC_SCAN_STRING  "%d "
+#define SHEEP_STATIC_WRITE_STRING "%d "
+void write_static_sheep(FILE *fp, struct Sheep * sheep)
 {
     int mateId = -1;
     if (sheep->pregnantPeriod != -1)
         mateId = sheep->mate->id;
 
-    fprintf(fp, SHEEP_WRITE_STRING, 
+    fprintf(fp, SHEEP_STATIC_WRITE_STRING, 
+        sheep->start_tick,
+        sheep->gender
+    );
+}
+
+void read_static_sheep(FILE *fp, struct Sheep *sheep, int *mateId)
+{
+    fscanf(fp, SHEEP_STATIC_SCAN_STRING,
+        &(sheep->start_tick), 
+        &(sheep->gender)
+    );
+}
+
+#define SHEEP_VARIABLE_SCAN_STRING  "%d %lf %lf %d %lf %d %d %d "
+#define SHEEP_VARIABLE_WRITE_STRING "%d %g %g %g %d %d %d %d "
+void write_variable_sheep(FILE *fp, struct Sheep * sheep)
+{
+    int mateId = -1;
+    if (sheep->pregnantPeriod != -1)
+        mateId = sheep->mate->id;
+
+    fprintf(fp, SHEEP_STATIC_WRITE_STRING, 
         sheep->id,
         sheep->x,
         sheep->y,
         sheep->a,
-        sheep->age,
-        sheep->gender,
         sheep->hunger,
         sheep->lookingForMate,
         mateId,
@@ -80,15 +100,13 @@ void write_sheep(FILE *fp, struct Sheep * sheep)
     );
 }
 
-void read_sheep(FILE *fp, struct Sheep *sheep, int *mateId)
+void read_variable_sheep(FILE *fp, struct Sheep *sheep, int *mateId)
 {
-    fscanf(fp, SHEEP_SCAN_STRING, 
+    fscanf(fp, SHEEP_STATIC_SCAN_STRING, 
         &(sheep->id),
         &(sheep->x),
         &(sheep->y),
         &(sheep->a),
-        &(sheep->age),
-        &(sheep->gender),
         &(sheep->hunger),
         &(sheep->lookingForMate),
         &mateId,

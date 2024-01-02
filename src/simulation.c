@@ -5,7 +5,7 @@ struct SimSettings *ss;
 struct LinkedList *sheepList;
 struct LinkedList *foodList;
 
-int totalSheepCreated = 0;
+int totalSheepCreated;
 
 struct LinkedList *grassChunks;
 int chunks;
@@ -14,9 +14,13 @@ const int chunkRadiusX[] = {0, 0, 0, -1, -1, -1, 1, 1, 1};
 const int chunkRadiusY[] = {0, 1, -1, 0, 1, -1, 0, 1, -1};
 
 FILE *rfp;
+FILE *static_sheep_fp;
+FILE *replay_ticks_fp;
 
-double foodSpawnIndex = 0;
-double sheepVisionTime = 0;
+double foodSpawnIndex;
+double sheepVisionTime;
+
+int current_tick;
 
 double random_pos()
 {
@@ -57,7 +61,7 @@ void spawn_food()
 struct Sheep* new_sheep()
 {
     struct Sheep* sheep = malloc(sizeof(struct Sheep));
-    sheep->age = 0;
+    sheep->start_tick = current_tick;
     sheep->hunger = .5;
     
     sheep->a =  ( (double) rand() / RAND_MAX ) * M_PI*2 - M_PI;
@@ -65,6 +69,8 @@ struct Sheep* new_sheep()
     sheep->gender = floor((double)rand()/RAND_MAX * 2);
     sheep->id = totalSheepCreated;
     totalSheepCreated++;
+
+    write_static_sheep(static_sheep_fp, sheep);
 
     return sheep;
 }
@@ -134,7 +140,7 @@ void female_sheep_tick(struct LinkedListNode * sheepNode)
 {
     clock_t start = clock();
     struct Sheep *sheep = (struct Sheep*) (sheepNode->obj);
-    if (sheep->age < ss->sheep_egg_min_age) {return;}
+    if (current_tick-sheep->start_tick < ss->sheep_egg_min_age) {return;}
 
     if (!sheep->lookingForMate) 
     {
@@ -184,8 +190,7 @@ void female_sheep_tick(struct LinkedListNode * sheepNode)
 void sheep_tick(struct LinkedListNode * sheepNode)
 {
     struct Sheep *sheep = (struct Sheep*) (sheepNode->obj);
-    sheep->age++;
-    if (sheep->age >= ss->sheep_max_lifespan)
+    if (current_tick-sheep->start_tick >= ss->sheep_max_lifespan)
         kill_sheep(sheepNode);
 
     double TurnSpeed;
@@ -258,7 +263,7 @@ void write_sheep_states(FILE *fp)
     {   
         struct LinkedListNode *nextSheep = sheepLHead->next;
         sheep = (struct Sheep *) sheepLHead->obj;
-        write_sheep(fp, sheep);
+        write_variable_sheep(fp, sheep);
         sheepLHead = nextSheep;
     }
 }
@@ -270,16 +275,27 @@ void refresh_replay_pointer()
     rfp = fopen("./replay.sim","a");
 }
 
+void reset_simulation()
+{
+    current_tick = 0;
+    foodSpawnIndex = 0;
+    sheepVisionTime = 0;
+    totalSheepCreated = 0;
+
+    sheepList = newList();
+    foodList = newList();
+}
+
 int run_simulation()
 {
     struct SimSettings settings;
     ss = &settings;
     getDefaultSettings(ss);
 
+    reset_simulation();
+
     printf("Setting up simulation...\n");
     clock_t setupStart = clock();
-    sheepList = newList();
-    foodList = newList();
 
     // Creating Grass Chunks
     chunks = ceil((double) ss->sim_map_size / ss->sim_grass_chunk_size);
@@ -295,14 +311,8 @@ int run_simulation()
     struct TickData *tDataList = malloc(sizeof(struct TickData)*ss->sim_ticks);
     struct TickData *tDataHead = tDataList;
 
-    printf("Opening Replay\n");
-
-    rfp = fopen("./replay.sim","w");
-
-    write_sim_settings(rfp, ss);
-    fclose(rfp);
-
-    refresh_replay_pointer();
+    static_sheep_fp = fopen("./static_sheep.temp", "w");
+    replay_ticks_fp = fopen("./replay_ticks.temp", "w");
 
     printf("Wrote replay pointers\n");
 
@@ -320,34 +330,22 @@ int run_simulation()
     // Running simulation
     printf("Started Simulation %fs\n", (setupStart-clock())/CLOCKS_PER_SEC);
 
-    write_sheep_states(rfp);
+    write_sheep_states(replay_ticks_fp);
 
     printf("Wrote initial Sheep states\n");
 
     double lastPercent = 0;
     double lastVisionTime = 0;
-    for (int i = 0; i < ss->sim_ticks; i++)
+    for (current_tick = 0; current_tick < ss->sim_ticks; current_tick++)
     {
         // printf("tick: %d\n", i);
         tick(sheepList, foodList, tDataHead);
         tDataHead++;
 
-        write_sheep_states(rfp);
-        
+        write_sheep_states(replay_ticks_fp);
         
 
-        // grassChunksHead = grassChunks;
-        // for (int i = 0; i < chunks+2; i++)
-        // {
-        //     for (int j = 0; j < chunks+2; j++)
-        //     {
-        //         printf("%d ", grassChunksHead->count);
-        //         grassChunksHead++;
-        //     }
-        //     printf("\n");
-        // }
-
-        double percent = floor((double) i / ss->sim_ticks * (100))/100.0;
+        double percent = floor((double) current_tick / ss->sim_ticks * (100))/100.0;
         if (lastPercent != percent)
         {
             lastPercent = percent;
@@ -363,32 +361,41 @@ int run_simulation()
         }
     }
 
+    printf("Simulation Concluded\n");
+    printf("Writing replay files\n");
+
+    // Reopen to read them back
+
+    fclose(static_sheep_fp);
+    fclose(replay_ticks_fp);
+
+    static_sheep_fp = fopen("./static_sheep.temp", "r");
+    replay_ticks_fp = fopen("./replay_ticks.temp", "r");
+
+    // Transfering from Temp files
+    rfp = fopen("replay.sim", "w");
+    write_sim_settings(rfp, ss);
+
+    fprintf(rfp, "%d ", totalSheepCreated);
+
+    int ch;
+
+    // Copying Static Sheep
+    while ((ch = fgetc(static_sheep_fp)) != EOF) {
+        fputc(ch, rfp);
+    }
+
+    // Copying Replay Ticks 
+    while ((ch = fgetc(replay_ticks_fp)) != EOF) {
+        fputc(ch, rfp);
+    }
+
+    fclose(static_sheep_fp);
+    fclose(replay_ticks_fp);
+
     fclose(rfp);
 
     printf("Completed Simulation\n");
-
-    printf("Writing CSV\n");
-    FILE *fptr;
-    fptr = fopen("./data.csv","w");
-    if(fptr == NULL)
-    {
-        printf("Error!");   
-        exit(1);             
-    }
-
-    fprintf(fptr, "Sheep Count, Grass Count\n");
-
-    tDataHead = tDataList;
-
-    for (int i = 0; i < ss->sim_ticks; i++)
-    {
-        fprintf(fptr, "%d,%d\n", tDataHead->sheepCount, tDataHead->grassCount);
-        tDataHead++;
-    }
-
-    fclose(fptr);
-
-    printf("Completed writing csv");
 
     return 0;
 }
