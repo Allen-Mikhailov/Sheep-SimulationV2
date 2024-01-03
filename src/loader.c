@@ -24,11 +24,11 @@ char *TICK_ATLAS_FILE_NAME   = "tick.atlas";
 char *TICK_STORE_FILE_NAME   = "tick.store";
 char *SHEEP_ATLAS_FILE_NAME  = "sheep.atlas";
 char *SHEEP_STORE_FILE_NAME  = "sheep.store";
-char *SETTINGS_FILE_NAME     = ".settings";
+char *SETTINGS_FILE_NAME     = "settings"; //would use .settings but vscode hides it in exploror
 #define MAX_LOADER_FILE_NAME 12; // temp
 
 #define ATLAS_DIGITS 12
-#define ATLAS_WRITE_STR "%0" DEF2STR(MAX_LOADER_FILE_NAME) "x "
+#define ATLAS_WRITE_STR "%012x "
 
 int dirExists(const char *folderPath)
 {
@@ -51,37 +51,34 @@ int openSave(struct save_pointers *save, const char * mode)
     // Making Sure the directory actually exists
     if (!dirExists(save->path))
     {
-        if (!_mkdir(save->path))
+        if (_mkdir(save->path) == -1)
         {
             printf("Error: Creating Directory");
             return 1;
         }
     }
 
-    int file_path_len = strlen(save->path)+MAX_LOADER_FILE_NAME+1;
-    const char *file_path = malloc(sizeof(char) * file_path_len);
+    char file_path[MAX_PATH_LENGTH];
 
     // Tick Atlas
-    snprintf(file_path, file_path_len, "%s%s", save->path, TICK_ATLAS_FILE_NAME);
+    snprintf(file_path, MAX_PATH_LENGTH, "%s\\%s", save->path, TICK_ATLAS_FILE_NAME);
     save->tick_atlas = fopen(file_path, mode);
 
     // Tick Store
-    snprintf(file_path, file_path_len, "%s%s", save->path, TICK_STORE_FILE_NAME);
+    snprintf(file_path, MAX_PATH_LENGTH, "%s\\%s", save->path, TICK_STORE_FILE_NAME);
     save->tick_store = fopen(file_path, mode);
 
     // Sheep Atlas
-    snprintf(file_path, file_path_len, "%s%s", save->path, SHEEP_ATLAS_FILE_NAME);
+    snprintf(file_path, MAX_PATH_LENGTH, "%s\\%s", save->path, SHEEP_ATLAS_FILE_NAME);
     save->sheep_atlas = fopen(file_path, mode);
 
      // Sheep Store
-    snprintf(file_path, file_path_len, "%s%s", save->path, SHEEP_STORE_FILE_NAME);
+    snprintf(file_path, MAX_PATH_LENGTH, "%s\\%s", save->path, SHEEP_STORE_FILE_NAME);
     save->sheep_store = fopen(file_path, mode);
 
     // Settings
-    snprintf(file_path, file_path_len, "%s%s", save->path, SETTINGS_FILE_NAME);
+    snprintf(file_path, MAX_PATH_LENGTH, "%s\\%s", save->path, SETTINGS_FILE_NAME);
     save->sim_settings = fopen(file_path, mode);
-
-    free(file_path);
 }
 
 int closeSave(struct save_pointers *save)
@@ -105,14 +102,19 @@ int startSave(struct save_pointers *save, struct SimSettings *settings)
     write_sim_settings(save->sim_settings, settings);
 }
 
-#define SHEEP_STATIC_SCAN_STRING  "%d "
-#define SHEEP_STATIC_WRITE_STRING "%d "
+void advanceTick(struct save_pointers *save)
+{
+    fseek(save->tick_atlas, 0, SEEK_END);
+    long fileSize = getFileSize(save->tick_store);
+    fprintf(save->tick_atlas, ATLAS_WRITE_STR, fileSize);
+}
+
+#define SHEEP_STATIC_SCAN_STRING  "%d %d "
+#define SHEEP_STATIC_WRITE_STRING "%d %d "
 int writeStaticSheep(struct save_pointers *save, struct Sheep* sheep)
 {
     // Getting the character it will start to write at
     int startChar = (int) getFileSize(save->sheep_store);
-    
-    printf("Wrote entity at %d\n", startChar);
 
     fseek(save->sheep_store, 0, SEEK_END); // Making sure it starts at the end
     
@@ -145,11 +147,11 @@ int readStaticSheep(struct save_pointers *save, struct Sheep* sheep, int id)
     return 0;
 }
 
-#define SHEEP_VARIABLE_SCAN_STRING  "%d %lf %lf %d %lf %d %d %d "
-#define SHEEP_VARIABLE_WRITE_STRING "%d %g %g %g %d %d %d %d "
+#define SHEEP_VARIABLE_SCAN_STRING  "%d %lf %lf %lf %lf %d %d %d "
+#define SHEEP_VARIABLE_WRITE_STRING "%d %g %g %g %g %d %d %d "
 void writeVariableSheep(struct save_pointers *save, struct Sheep* sheep)
 {
-    fprintf(save->tick_store, SHEEP_STATIC_WRITE_STRING, 
+    fprintf(save->tick_store, SHEEP_VARIABLE_WRITE_STRING, 
         sheep->id,
         sheep->x,
         sheep->y,
@@ -161,9 +163,9 @@ void writeVariableSheep(struct save_pointers *save, struct Sheep* sheep)
     );
 }
 
-void loadVariableSheep(struct save_pointers *save, struct Sheep* sheep)
+void readVariableSheep(struct save_pointers *save, struct Sheep* sheep)
 {
-    fscanf(save->tick_store, SHEEP_STATIC_SCAN_STRING, 
+    fscanf(save->tick_store, SHEEP_VARIABLE_SCAN_STRING, 
         &(sheep->id),
         &(sheep->x),
         &(sheep->y),
