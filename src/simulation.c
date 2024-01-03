@@ -168,10 +168,7 @@ void female_sheep_tick(struct LinkedListNode * sheepNode)
 
         if (closestPartner != NULL)
         {
-            // Cloning Sheep Data
-            struct Sheep s2 = *closestPartner;
-
-            sheep->mate = &s2;
+            sheep->mateId = closestPartner->id;
             sheep->pregnantPeriod = 0;
         }
     } else {
@@ -268,13 +265,6 @@ void write_sheep_states(FILE *fp)
     }
 }
 
-// Used to prevent errors as it allows us to see the log
-void refresh_replay_pointer()
-{
-    fclose(rfp);
-    rfp = fopen("./replay.sim","a");
-}
-
 void reset_simulation()
 {
     current_tick = 0;
@@ -310,9 +300,6 @@ int run_simulation()
     // Tick Data
     struct TickData *tDataList = malloc(sizeof(struct TickData)*ss->sim_ticks);
     struct TickData *tDataHead = tDataList;
-
-    static_sheep_fp = fopen("./static_sheep.temp", "w");
-    replay_ticks_fp = fopen("./replay_ticks.temp", "w");
 
     printf("Wrote replay pointers\n");
 

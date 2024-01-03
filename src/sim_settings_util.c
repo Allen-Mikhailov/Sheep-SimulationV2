@@ -1,10 +1,40 @@
-#include <stdio.h> 
+#ifndef SIM_SETTINGS_UTIL
+#define SIM_SETTINGS_UTIL
+
+#include <stdio.h>
 #include "structs.c"
 
-void write_token(FILE *fp, int token, double value)
+void getDefaultSettings(struct SimSettings *ss)
 {
-    fprintf(fp, "%d %f ", token, value);
+
+    ss->sheep_starve_rate = .005;
+    ss->sheep_thirst_rate = 0;
+
+    ss->sheep_eating_range = 5;
+
+    ss->sheep_max_speed = 1;
+    ss->sheep_max_turn_speed = .05;
+
+    ss->sheep_view_distance = 100;
+    ss->sheep_view_angle = (M_1_PI / 4);
+
+    ss->sheep_max_lifespan = 1000,
+
+    ss->sheep_egg_min_age = 100;
+    ss->sheep_egg_chance = 100;
+    
+    ss->sheep_mate_distance = 100;
+    ss->sheep_pregnant_period = 100;
+    ss->sheep_pregnant_hunger_cost = 100;
+
+    ss->sim_starting_sheep = 100;
+    ss->sim_ticks = 100;
+    ss->sim_food_spawn_rate = 100;
+    ss->sim_food_max = 1000;
+    ss->sim_map_size = 1000;
+    ss->sim_grass_chunk_size = ss->sheep_view_distance;
 }
+
 
 #define SIM_SETTINGS_WRITE_STRING "%g %g %g %g %g %g %g %g %g %g %g %g %g %d %d %g %d %g %g\n"
 #define SIM_SETTINGS_SCAN_STRING  "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %d %d %lf %d %lf %lf\n"
@@ -58,58 +88,4 @@ void read_sim_settings(FILE *fp, struct SimSettings *s)
     );
 }
 
-#define SHEEP_STATIC_SCAN_STRING  "%d "
-#define SHEEP_STATIC_WRITE_STRING "%d "
-void write_static_sheep(FILE *fp, struct Sheep * sheep)
-{
-    int mateId = -1;
-    if (sheep->pregnantPeriod != -1)
-        mateId = sheep->mate->id;
-
-    fprintf(fp, SHEEP_STATIC_WRITE_STRING, 
-        sheep->start_tick,
-        sheep->gender
-    );
-}
-
-void read_static_sheep(FILE *fp, struct Sheep *sheep, int *mateId)
-{
-    fscanf(fp, SHEEP_STATIC_SCAN_STRING,
-        &(sheep->start_tick), 
-        &(sheep->gender)
-    );
-}
-
-#define SHEEP_VARIABLE_SCAN_STRING  "%d %lf %lf %d %lf %d %d %d "
-#define SHEEP_VARIABLE_WRITE_STRING "%d %g %g %g %d %d %d %d "
-void write_variable_sheep(FILE *fp, struct Sheep * sheep)
-{
-    int mateId = -1;
-    if (sheep->pregnantPeriod != -1)
-        mateId = sheep->mate->id;
-
-    fprintf(fp, SHEEP_STATIC_WRITE_STRING, 
-        sheep->id,
-        sheep->x,
-        sheep->y,
-        sheep->a,
-        sheep->hunger,
-        sheep->lookingForMate,
-        mateId,
-        sheep->pregnantPeriod
-    );
-}
-
-void read_variable_sheep(FILE *fp, struct Sheep *sheep, int *mateId)
-{
-    fscanf(fp, SHEEP_STATIC_SCAN_STRING, 
-        &(sheep->id),
-        &(sheep->x),
-        &(sheep->y),
-        &(sheep->a),
-        &(sheep->hunger),
-        &(sheep->lookingForMate),
-        &mateId,
-        &(sheep->pregnantPeriod)
-    );
-}
+#endif 

@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <commctrl.h>
 #include <time.h>
+#include <stdlib.h>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -14,8 +15,9 @@
 
 #include "math_util.c"
 #include "structs.c"
-#include "replay_util.c"
+#include "sim_settings_util.c"
 #include "sprite_util.c"
+#include "loader.c"
 
 void pop_path(char* destination, char* path)
 {
