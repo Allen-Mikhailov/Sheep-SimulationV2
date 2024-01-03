@@ -9,6 +9,8 @@
 #define MENU_REPLAY_PREVIOUS_FRAME 5
 #define MENU_REPLAY_PREVIOUS_10_FRAME 6
 
+struct save_pointers replay_save;
+
 void RequestReplayDraw(HWND hwnd)
 {
     RECT clientRect;
@@ -16,8 +18,6 @@ void RequestReplayDraw(HWND hwnd)
 
     int width = clientRect.right-clientRect.left;
     int height = clientRect.bottom-clientRect.top;
-
-    printf("width: %d height: %d\n", width, height);
 
     int size = min(height, width) * .7;
     int horizontalPadding = (width - size) / 2;
@@ -29,7 +29,8 @@ void RequestReplayDraw(HWND hwnd)
     HBITMAP bitmap = createCompatibleBitmap(hdc, size, size);
     SelectObject(replay_hdc, bitmap);
 
-    DrawReplay(replay_hdc, replay_frame, size, size);
+    LoadFrame(&replay_save);
+    DrawReplay(replay_hdc, size, size);
 
     // Drawing Replay
     BitBlt(hdc, horizontalPadding, vertialPadding, size, size, replay_hdc, 0, 0, SRCCOPY);
@@ -82,9 +83,8 @@ void HandleWM_COMMAND(HWND hwnd, WPARAM wParam)
             run_simulation();
             break;
         case MENU_REPLAY_START:
-            FILE *fp = fopen("./replay.sim", "r");
-            LoadReplay(fp);
-            fclose(fp);
+            replay_save.path = "./replay";
+            OpenReplay(&replay_save);
 
             RequestReplayDraw(hwnd);
             break;

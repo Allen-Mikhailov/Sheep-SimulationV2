@@ -1,62 +1,58 @@
 #include "shared.c"
 
-struct Tick {
-    struct Sheep *sheep;
-    int sheep_count;
-};
-
-BOOL loaded_replay = FALSE;
+BOOL opened_replay = FALSE;
+BOOL loaded_frame = FALSE;
 struct SimSettings settings;
-struct Tick *ticks;
 
-void FreeReplay()
+struct Sheep *frame_sheep;
+int sheep_count;
+
+void FreeFrame()
 {
-    if (!loaded_replay) {return;}
-    loaded_replay = FALSE;
+    if (!opened_replay) {return;}
+    opened_replay = FALSE;
+    free(frame_sheep);
 }
 
-int LoadReplay(FILE *fp)
+int OpenReplay(struct save_pointers *save)
 {
-    FreeReplay();
+    openSave(save, "r");
+    opened_replay = TRUE;
+}
 
-    loaded_replay = TRUE;
-    read_sim_settings(fp, &settings);
-    ticks = (struct Tick *) malloc(sizeof(struct Tick) * settings.sim_ticks+1);
+int LoadFrame(struct save_pointers *save)
+{
+    FreeFrame();
+
+    fseek(save->sim_settings, 0, SEEK_SET);
+    read_sim_settings(save->sim_settings, &settings);
+
+    long frame_atlas_pos = getAtlasPosition(replay_frame);
+    fseek(save->tick_atlas, getAtlasPosition(replay_frame), SEEK_SET);
+
+    long frame_pos;
+    fscanf(save->tick_atlas, "%x ", &frame_pos);
+
+    fseek(save->tick_store, frame_pos, SEEK_SET);
+
+    // Getting Sheep Count
+    fscanf(save->tick_store, "%d ", &sheep_count);
+    frame_sheep = malloc(sizeof(struct Sheep) * sheep_count);
     
-    struct Tick *tick_head = ticks;
-    for (int i = 0; i < settings.sim_ticks+1; i++)
+    for (int i = 0; i < sheep_count; i++)
     {
-        int sheepCount = -1;
-        fscanf(fp, "%d ", &sheepCount);
-        tick_head->sheep_count = sheepCount;
+        readVariableSheep(save, &frame_sheep[i]);
 
-        if (sheepCount == -1) {
-            printf("Failed to Load Sheep Count on tick %d", i);
-            return 0;
-        }
-
-        tick_head->sheep = (struct Sheep *) malloc(sizeof(struct Sheep) * sheepCount);
-        struct Sheep *sheed_head = tick_head->sheep;
-
-        for (int j = 0; j < sheepCount; j++)
-        {
-            int mateId;
-            // read_variable_sheep(fp, sheed_head, &mateId);
-            sheed_head++;
-        }
-
-        tick_head++;
-    }
+        readStaticSheep(save, &frame_sheep[i], frame_sheep[i].id);
+    }   
 }
 
 #define REPLAY_BACKGROUND_COLOR RGB(200, 200, 200)
 #define REPLAY_SHEEP_COLOR RGB(0, 0, 0)
 #define REPLAY_SHEEP_RADIUS 5
 
-void DrawReplay(HDC bitmap, int frame, int width, int height)
+void DrawReplay(HDC bitmap, int width, int height)
 {
-    struct Tick *tick = &ticks[frame];
-    
     // Drawing Background
     HBRUSH backgroundBrush = (HBRUSH) CreateSolidBrush(REPLAY_BACKGROUND_COLOR);
     RECT rect = {0, 0, width, height};
@@ -67,11 +63,11 @@ void DrawReplay(HDC bitmap, int frame, int width, int height)
     SelectObject(bitmap, sheepBrush);
 
     // 0, 0 is bottom left
-    printf("sheep count, %d\n", tick->sheep_count);
+    printf("sheep count, %d\n", sheep_count);
     printf("map size %f\n", settings.sim_map_size);
-    for (int i = 0; i < tick->sheep_count; i++)
+    for (int i = 0; i < sheep_count; i++)
     {
-        struct Sheep *sheep = &tick->sheep[i];
+        struct Sheep *sheep = &frame_sheep[i];
 
         double x = sheep->x/settings.sim_map_size * width;
         double y = sheep->y/settings.sim_map_size * height;

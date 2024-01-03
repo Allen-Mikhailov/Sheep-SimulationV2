@@ -90,9 +90,19 @@ int closeSave(struct save_pointers *save)
     fclose(save->sim_settings);
 }
 
-int getAtlasPosition(int id)
+long getAtlasPosition(long id)
 {
     return id * (ATLAS_DIGITS+1); // acounting for the space seperator 
+}
+
+long readAtlasPos(FILE *atlas, long id)
+{
+    long atlas_pos = getAtlasPosition(id);
+    fseek(atlas, atlas_pos, SEEK_SET);
+
+    long pos;
+    fscanf(atlas, "%ld ", &pos);
+    return pos;
 }
 
 int startSave(struct save_pointers *save, struct SimSettings *settings)
