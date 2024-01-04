@@ -3,38 +3,17 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-struct SheepStatic {
-    int start_tick;
-    int gender;
-};
-
-struct SheepVariable
-{
-    int id;
-
-    double x;
-    double y;
-    double a; // Angle
-
-    double hunger;
-
-    // Might make them asexual
-    int lookingForMate;
-    int mateId;
-    int pregnantPeriod;
-};
-
 struct Sheep {
     int start_tick;
     int gender;
 
     int id;
 
-    double x;
-    double y;
-    double a; // Angle
+    float x;
+    float y;
+    float a; // Angle
 
-    double hunger;
+    float hunger;
 
     // Might make them asexual
     int lookingForMate;
@@ -44,9 +23,9 @@ struct Sheep {
 
 struct Food
 {
-    double x;
-    double y;
-    double value;
+    float x;
+    float y;
+    float value;
 
     struct LinkedList *chunk;
     struct LinkedListNode * mainListNode;
@@ -61,36 +40,36 @@ struct TickData
 
 struct SimSettings {
     // Sheep Constants
-    double sheep_starve_rate;
-    double sheep_thirst_rate;
+    float sheep_starve_rate;
+    float sheep_thirst_rate;
 
-    double sheep_eating_range;
+    float sheep_eating_range;
 
-    double sheep_max_speed;
-    double sheep_max_turn_speed;
+    float sheep_max_speed;
+    float sheep_max_turn_speed;
 
-    double sheep_view_distance;
-    double sheep_view_angle;
+    float sheep_view_distance;
+    float sheep_view_angle;
 
-    double sheep_max_lifespan;
+    int sheep_max_lifespan;
 
-    double sheep_egg_min_age;
-    double sheep_egg_chance;
+    float sheep_egg_min_age;
+    float sheep_egg_chance;
 
-    double sheep_mate_distance;
-    double sheep_pregnant_period;
-    double sheep_pregnant_hunger_cost;
+    float sheep_mate_distance;
+    float sheep_pregnant_period;
+    float sheep_pregnant_hunger_cost;
 
     // Simulation Constants
     int sim_starting_sheep;
     int sim_ticks;
 
-    double sim_food_spawn_rate;
+    float sim_food_spawn_rate;
     int sim_food_max;
 
-    double sim_grass_chunk_size;
+    float sim_grass_chunk_size;
 
-    double sim_map_size;
+    float sim_map_size;
 };
 
 #define SIM_STRUCTS

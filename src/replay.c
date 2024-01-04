@@ -16,7 +16,7 @@ void FreeFrame()
 
 int OpenReplay(struct save_pointers *save)
 {
-    openSave(save, "r");
+    openSave(save, "rb");
     opened_replay = TRUE;
 }
 
@@ -31,12 +31,12 @@ int LoadFrame(struct save_pointers *save)
     fseek(save->tick_atlas, getAtlasPosition(replay_frame), SEEK_SET);
 
     long frame_pos;
-    fscanf(save->tick_atlas, "%x ", &frame_pos);
+    fread(&frame_pos, sizeof(long), 1, save->tick_atlas);
 
     fseek(save->tick_store, frame_pos, SEEK_SET);
 
     // Getting Sheep Count
-    fscanf(save->tick_store, "%d ", &sheep_count);
+    fread(&sheep_count, sizeof(int), 1, save->tick_store);
     frame_sheep = malloc(sizeof(struct Sheep) * sheep_count);
     
     for (int i = 0; i < sheep_count; i++)

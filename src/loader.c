@@ -92,7 +92,7 @@ int closeSave(struct save_pointers *save)
 
 long getAtlasPosition(long id)
 {
-    return id * (ATLAS_DIGITS+1); // acounting for the space seperator 
+    return id * sizeof(long); // acounting for the space seperator 
 }
 
 long readAtlasPos(FILE *atlas, long id)
@@ -107,7 +107,7 @@ long readAtlasPos(FILE *atlas, long id)
 
 int startSave(struct save_pointers *save, struct SimSettings *settings)
 {
-    openSave(save, "w+");
+    openSave(save, "wb+");
 
     write_sim_settings(save->sim_settings, settings);
 }
@@ -116,26 +116,25 @@ void advanceTick(struct save_pointers *save)
 {
     fseek(save->tick_atlas, 0, SEEK_END);
     long fileSize = getFileSize(save->tick_store);
-    fprintf(save->tick_atlas, ATLAS_WRITE_STR, fileSize);
+    fwrite(&fileSize, sizeof(long), 1, save->tick_atlas);
 }
 
-#define SHEEP_STATIC_SCAN_STRING  "%d %d "
-#define SHEEP_STATIC_WRITE_STRING "%d %d "
+#define SHEEP_STATIC_INT_COUNT 2
 int writeStaticSheep(struct save_pointers *save, struct Sheep* sheep)
 {
     // Getting the character it will start to write at
-    int startChar = (int) getFileSize(save->sheep_store);
-
+    long startByte = getFileSize(save->sheep_store);
     fseek(save->sheep_store, 0, SEEK_END); // Making sure it starts at the end
     
     // Writing the data
-    fprintf(save->sheep_store, SHEEP_STATIC_WRITE_STRING, 
-        sheep->start_tick,
-        sheep->gender
-    );
+    int ints[SHEEP_STATIC_INT_COUNT];
+    ints[0] = sheep->gender;
+    ints[1] = sheep->start_tick;
+    fwrite(ints, sizeof(int), SHEEP_STATIC_INT_COUNT, save->sheep_store);
 
     // Writing the pos to the atlas
-    fprintf(save->sheep_atlas, ATLAS_WRITE_STR , startChar);
+    fseek(save->sheep_atlas, 0, SEEK_END);
+    fwrite(&startByte, sizeof(long), 1, save->sheep_atlas);
 
     return 0;
 }
@@ -143,46 +142,54 @@ int writeStaticSheep(struct save_pointers *save, struct Sheep* sheep)
 int readStaticSheep(struct save_pointers *save, struct Sheep* sheep, int id)
 {
     int atlas_pos = getAtlasPosition(id);
-    long store_pos;
+    long startByte;
 
+    // Getting the starting byte in the store
     fseek(save->sheep_atlas, atlas_pos, SEEK_SET);
-    fscanf(save->sheep_atlas, "%x ", &store_pos);
+    fread(&startByte, sizeof(long), 1, save->sheep_atlas);
 
-    fseek(save->sheep_store, store_pos, SEEK_SET);
-    fscanf(save->sheep_store, SHEEP_STATIC_SCAN_STRING,
-        &(sheep->start_tick), 
-        &(sheep->gender)
-    );
+    // Reading the data
+    int ints[SHEEP_STATIC_INT_COUNT];
+    fread(ints, sizeof(int), SHEEP_STATIC_INT_COUNT, save->sheep_store);
+    sheep->gender     = ints[0];
+    sheep->start_tick = ints[1];
 
     return 0;
 }
 
-#define SHEEP_VARIABLE_SCAN_STRING  "%d %lf %lf %lf %lf %d %d %d "
-#define SHEEP_VARIABLE_WRITE_STRING "%d %g %g %g %g %d %d %d "
+#define SHEEP_VARIABLE_INT_COUNT 4
+#define SHEEP_VARIABLE_FLOAT_COUNT 4
 void writeVariableSheep(struct save_pointers *save, struct Sheep* sheep)
 {
-    fprintf(save->tick_store, SHEEP_VARIABLE_WRITE_STRING, 
-        sheep->id,
-        sheep->x,
-        sheep->y,
-        sheep->a,
-        sheep->hunger,
-        sheep->lookingForMate,
-        sheep->mateId,
-        sheep->pregnantPeriod
-    );
+    int ints[SHEEP_VARIABLE_INT_COUNT];
+    ints[0] = sheep->id;
+    ints[1] = sheep->lookingForMate;
+    ints[2] = sheep->mateId;
+    ints[3] = sheep->pregnantPeriod;
+    fwrite(ints, sizeof(int), SHEEP_VARIABLE_INT_COUNT, save->tick_store);
+
+    float floats[SHEEP_VARIABLE_FLOAT_COUNT];
+    floats[0] = sheep->x;
+    floats[1] = sheep->y;
+    floats[2] = sheep->a;
+    floats[3] = sheep->hunger;
+    fwrite(floats, sizeof(float), SHEEP_VARIABLE_FLOAT_COUNT, save->tick_store);
 }
 
 void readVariableSheep(struct save_pointers *save, struct Sheep* sheep)
 {
-    fscanf(save->tick_store, SHEEP_VARIABLE_SCAN_STRING, 
-        &(sheep->id),
-        &(sheep->x),
-        &(sheep->y),
-        &(sheep->a),
-        &(sheep->hunger),
-        &(sheep->lookingForMate),
-        &(sheep->mateId),
-        &(sheep->pregnantPeriod)
-    );
-}
+    int ints[SHEEP_VARIABLE_INT_COUNT];
+    fread(ints, sizeof(int), SHEEP_VARIABLE_INT_COUNT, save->tick_store);
+    sheep->id             = ints[0];
+    sheep->lookingForMate = ints[1];
+    sheep->mateId         = ints[2];
+    sheep->pregnantPeriod = ints[3];
+
+
+    float floats[SHEEP_VARIABLE_FLOAT_COUNT];
+    fread(floats, sizeof(float), SHEEP_VARIABLE_FLOAT_COUNT, save->tick_store);
+    sheep->x      = floats[0];
+    sheep->y      = floats[1];
+    sheep->a      = floats[2];
+    sheep->hunger = floats[3];
+} 

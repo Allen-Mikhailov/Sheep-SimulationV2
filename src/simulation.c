@@ -253,7 +253,7 @@ void writeSheepStates()
 {
     struct LinkedListNode *sheepLHead = sheepList->tail;
     struct Sheep *sheep;
-    fprintf(sim_save->tick_store, "%d ", sheepList->count);
+    fwrite(&sheepList->count, sizeof(int), 1, sim_save->tick_store);
     while (sheepLHead != NULL)
     {   
         struct LinkedListNode *nextSheep = sheepLHead->next;
