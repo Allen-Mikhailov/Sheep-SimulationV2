@@ -3,8 +3,28 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-struct Sheep
+struct SheepStatic {
+    int start_tick;
+    int gender;
+};
+
+struct SheepVariable
 {
+    int id;
+
+    double x;
+    double y;
+    double a; // Angle
+
+    double hunger;
+
+    // Might make them asexual
+    int lookingForMate;
+    int mateId;
+    int pregnantPeriod;
+};
+
+struct Sheep {
     int start_tick;
     int gender;
 
