@@ -235,9 +235,11 @@ void readStaticFood(struct save_pointers *save, struct Food* food, long id)
     fseek(save->food_atlas, atlas_pos, SEEK_SET);
     fread(&startByte, sizeof(long), 1, save->food_atlas);
 
+    fseek(save->food_store, startByte, SEEK_SET);
+
     // Reading the data
     float floats[FOOD_STATIC_FLOAT_COUNT];
-    fread(floats, sizeof(float), SHEEP_STATIC_INT_COUNT, save->food_store);
+    fread(floats, sizeof(float), FOOD_STATIC_FLOAT_COUNT, save->food_store);
     food->x     = floats[0];
     food->y     = floats[1];
     food->value = floats[2];

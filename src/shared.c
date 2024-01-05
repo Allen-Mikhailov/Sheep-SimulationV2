@@ -19,6 +19,9 @@
 #include "sprite_util.c"
 #include "loader.c"
 
+#define STORE_SHEEP
+#define STORE_FOOD
+
 void pop_path(char* destination, char* path)
 {
     // Finding the last slash

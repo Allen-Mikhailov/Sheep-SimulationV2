@@ -29,7 +29,7 @@ void getDefaultSettings(struct SimSettings *ss)
 
     ss->sim_starting_sheep = 100;
     ss->sim_ticks = 100;
-    ss->sim_food_spawn_rate = 100;
+    ss->sim_food_spawn_rate = 1;
     ss->sim_food_max = 1000;
     ss->sim_map_size = 1000;
     ss->sim_grass_chunk_size = ss->sheep_view_distance;

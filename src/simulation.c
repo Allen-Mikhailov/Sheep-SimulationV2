@@ -54,7 +54,9 @@ void spawn_food()
         newFood->chunk = grassChunk;
         newFood->chunkListNode = AddToList(grassChunk, newFood);
 
+        #ifdef STORE_FOOD
         writeStaticFood(sim_save, newFood);
+        #endif
 
         foodSpawnIndex--;
     }
@@ -74,7 +76,9 @@ struct Sheep* new_sheep()
     sheep->id = totalSheepCreated;
     totalSheepCreated++;
 
+    #ifdef STORE_SHEEP
     writeStaticSheep(sim_save, sheep);
+    #endif
 
     return sheep;
 }
@@ -257,6 +261,7 @@ void tick(struct LinkedList *sheepList, struct LinkedList *foodList, struct Tick
 
 void writeSheepStates()
 {
+    #ifdef STORE_SHEEP
     struct LinkedListNode *sheepLHead = sheepList->tail;
     struct Sheep *sheep;
     fwrite(&sheepList->count, sizeof(int), 1, sim_save->tick_store);
@@ -267,10 +272,12 @@ void writeSheepStates()
         writeVariableSheep(sim_save, sheep);
         sheepLHead = nextSheep;
     }
+    #endif
 }
 
 void writeFoodStates()
 {
+    #ifdef STORE_FOOD
     struct LinkedListNode *foodLHead = foodList->tail;
     struct Food *food;
     fwrite(&foodList->count, sizeof(int), 1, sim_save->tick_store);
@@ -281,6 +288,7 @@ void writeFoodStates()
         writeVariableFood(sim_save, food);
         foodLHead = nextFood;
     }
+    #endif
 }
 
 void reset_simulation()

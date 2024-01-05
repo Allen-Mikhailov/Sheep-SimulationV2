@@ -15,6 +15,7 @@ void FreeFrame()
     if (!opened_replay) {return;}
     opened_replay = FALSE;
     free(frame_sheep);
+    free(frame_food);
 }
 
 int OpenReplay(struct save_pointers *save)
@@ -38,6 +39,7 @@ int LoadFrame(struct save_pointers *save)
 
     fseek(save->tick_store, frame_pos, SEEK_SET);
 
+    #ifdef STORE_SHEEP
     // Getting Sheep Count
     fread(&sheep_count, sizeof(int), 1, save->tick_store);
     frame_sheep = malloc(sizeof(struct Sheep) * sheep_count);
@@ -47,18 +49,27 @@ int LoadFrame(struct save_pointers *save)
     {
         readVariableSheep(save, &frame_sheep[i]);
         readStaticSheep(save, &frame_sheep[i], frame_sheep[i].id);
-    }   
+    }
 
+    printf("Loaded Sheep\n");
+
+    #endif
+
+    #ifdef STORE_FOOD
     // Getting the Food Count
     fread(&food_count, sizeof(int), 1, save->tick_store);
     frame_food = malloc(sizeof(struct Food) * food_count);
 
-    // Reading The Sheep
-    for (int i = 0; i < sheep_count; i++)
+    // Reading The Food
+    for (int i = 0; i < food_count; i++)
     {
         readVariableFood(save, &frame_food[i]);
         readStaticFood(save, &frame_food[i], frame_food[i].id);
     }
+
+    printf("Loaded Food\n");
+
+    #endif
 }
 
 #define REPLAY_BACKGROUND_COLOR RGB(200, 200, 200)
@@ -87,8 +98,7 @@ void DrawReplay(HDC bitmap, int width, int height)
     SelectObject(bitmap, sheepBrush);
 
     // 0, 0 is bottom left
-    printf("sheep count, %d\n", sheep_count);
-    printf("map size %f\n", settings.sim_map_size);
+    printf("MapSize: %f, Sheep: %d, Food: %d\n", settings.sim_map_size, sheep_count, food_count);
     for (int i = 0; i < sheep_count; i++)
     {
         struct Sheep *sheep = &frame_sheep[i];
@@ -99,8 +109,8 @@ void DrawReplay(HDC bitmap, int width, int height)
         drawCircle(bitmap, x, y, REPLAY_SHEEP_RADIUS);
 
         // Drawing the view direction
-        MoveToEx(bitmap, x, height-y, NULL);
-        LineTo(bitmap, x + cos(sheep->a)*20, height-(y + sin(sheep->a)*20));
+        MoveToEx(bitmap, x, y, NULL);
+        LineTo(bitmap, x + cos(sheep->a)*20, y - sin(sheep->a)*20);
     }
 
     DeleteObject(sheepBrush);
@@ -115,7 +125,7 @@ void DrawReplay(HDC bitmap, int width, int height)
         double x = food->x/settings.sim_map_size * width;
         double y = (1 - food->y/settings.sim_map_size) * height;
 
-        drawCircle(bitmap, x, y, REPLAY_SHEEP_RADIUS);
+        drawCircle(bitmap, x, y, REPLAY_FOOD_RADIUS);
     }
     DeleteObject(foodBrush);
 }
