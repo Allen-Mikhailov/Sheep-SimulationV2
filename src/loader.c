@@ -13,10 +13,16 @@
 
 struct save_pointers {
     const char* path; //expects
+
     FILE *tick_atlas;
     FILE *tick_store;
+
     FILE *sheep_atlas;
     FILE *sheep_store;
+
+    FILE *food_atlas;
+    FILE* food_store;
+
     FILE *sim_settings;
 };
 
@@ -24,11 +30,10 @@ char *TICK_ATLAS_FILE_NAME   = "tick.atlas";
 char *TICK_STORE_FILE_NAME   = "tick.store";
 char *SHEEP_ATLAS_FILE_NAME  = "sheep.atlas";
 char *SHEEP_STORE_FILE_NAME  = "sheep.store";
+char *FOOD_ATLAS_FILE_NAME   = "food.atlas";
+char *FOOD_STORE_FILE_NAME   = "food.store";
 char *SETTINGS_FILE_NAME     = "settings"; //would use .settings but vscode hides it in exploror
 #define MAX_LOADER_FILE_NAME 12; // temp
-
-#define ATLAS_DIGITS 12
-#define ATLAS_WRITE_STR "%012x "
 
 int dirExists(const char *folderPath)
 {
@@ -75,6 +80,14 @@ int openSave(struct save_pointers *save, const char * mode)
      // Sheep Store
     snprintf(file_path, MAX_PATH_LENGTH, "%s\\%s", save->path, SHEEP_STORE_FILE_NAME);
     save->sheep_store = fopen(file_path, mode);
+
+    // Food Atlas
+    snprintf(file_path, MAX_PATH_LENGTH, "%s\\%s", save->path, FOOD_ATLAS_FILE_NAME);
+    save->food_atlas = fopen(file_path, mode);
+
+    // Food Store
+    snprintf(file_path, MAX_PATH_LENGTH, "%s\\%s", save->path, FOOD_STORE_FILE_NAME);
+    save->food_store = fopen(file_path, mode);
 
     // Settings
     snprintf(file_path, MAX_PATH_LENGTH, "%s\\%s", save->path, SETTINGS_FILE_NAME);
@@ -139,7 +152,7 @@ int writeStaticSheep(struct save_pointers *save, struct Sheep* sheep)
     return 0;
 }
 
-int readStaticSheep(struct save_pointers *save, struct Sheep* sheep, int id)
+int readStaticSheep(struct save_pointers *save, struct Sheep* sheep, long id)
 {
     int atlas_pos = getAtlasPosition(id);
     long startByte;
@@ -192,4 +205,55 @@ void readVariableSheep(struct save_pointers *save, struct Sheep* sheep)
     sheep->y      = floats[1];
     sheep->a      = floats[2];
     sheep->hunger = floats[3];
+} 
+
+#define FOOD_STATIC_FLOAT_COUNT 3
+void writeStaticFood(struct save_pointers *save, struct Food* food)
+{
+    // Getting the character it will start to write at
+    long startByte = getFileSize(save->food_store);
+    fseek(save->food_store, 0, SEEK_END); // Making sure it starts at the end
+
+    // Writing the data
+    float floats[FOOD_STATIC_FLOAT_COUNT];
+    floats[0] = food->x;
+    floats[1] = food->y;
+    floats[2] = food->value;
+    fwrite(floats, sizeof(float), FOOD_STATIC_FLOAT_COUNT, save->food_store);
+
+    // Writing the pos to the atlas
+    fseek(save->food_atlas, 0, SEEK_END);
+    fwrite(&startByte, sizeof(long), 1, save->food_atlas);
+}
+
+void readStaticFood(struct save_pointers *save, struct Food* food, long id)
+{
+    int atlas_pos = getAtlasPosition(id);
+    long startByte;
+
+    // Getting the starting byte in the store
+    fseek(save->food_atlas, atlas_pos, SEEK_SET);
+    fread(&startByte, sizeof(long), 1, save->food_atlas);
+
+    // Reading the data
+    float floats[FOOD_STATIC_FLOAT_COUNT];
+    fread(floats, sizeof(float), SHEEP_STATIC_INT_COUNT, save->food_store);
+    food->x     = floats[0];
+    food->y     = floats[1];
+    food->value = floats[2];
+}
+
+#define FOOD_VARIABLE_INT 1
+void writeVariableFood(struct save_pointers *save, struct Food* food)
+{
+    int ints[FOOD_VARIABLE_INT];
+    ints[0] = food->id;
+    fwrite(ints, sizeof(int), FOOD_VARIABLE_INT, save->tick_store);
+} 
+
+void readVariableFood(struct save_pointers *save, struct Food* food)
+{
+    int ints[FOOD_VARIABLE_INT];
+    fread(ints, sizeof(int), FOOD_VARIABLE_INT, save->tick_store);
+    food->id = ints[0];
 } 

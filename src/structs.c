@@ -23,6 +23,7 @@ struct Sheep {
 
 struct Food
 {
+    int id;
     float x;
     float y;
     float value;

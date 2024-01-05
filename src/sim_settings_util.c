@@ -12,13 +12,13 @@ void getDefaultSettings(struct SimSettings *ss)
 
     ss->sheep_eating_range = 5;
 
-    ss->sheep_max_speed = 1;
-    ss->sheep_max_turn_speed = .05f;
+    ss->sheep_max_speed = 3;
+    ss->sheep_max_turn_speed = .15f;
 
     ss->sheep_view_distance = 100;
     ss->sheep_view_angle = (M_1_PI / 4);
 
-    ss->sheep_max_lifespan = 1000,
+    ss->sheep_max_lifespan = 10000,
 
     ss->sheep_egg_min_age = 100;
     ss->sheep_egg_chance = 100;

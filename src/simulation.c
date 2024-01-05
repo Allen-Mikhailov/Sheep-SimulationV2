@@ -6,6 +6,7 @@ struct LinkedList *sheepList;
 struct LinkedList *foodList;
 
 int totalSheepCreated;
+int totalFoodCreated;
 
 struct LinkedList *grassChunks;
 int chunks;
@@ -44,11 +45,16 @@ void spawn_food()
         newFood->y = random_pos();
         newFood->mainListNode = AddToList(foodList, newFood);
 
+        newFood->id = totalFoodCreated;
+        totalFoodCreated++;
+
         // Chunk
         int chunk = get_chunk(newFood->x, newFood->y);
         struct LinkedList* grassChunk = grassChunks+chunk;
         newFood->chunk = grassChunk;
         newFood->chunkListNode = AddToList(grassChunk, newFood);
+
+        writeStaticFood(sim_save, newFood);
 
         foodSpawnIndex--;
     }
@@ -263,12 +269,27 @@ void writeSheepStates()
     }
 }
 
+void writeFoodStates()
+{
+    struct LinkedListNode *foodLHead = foodList->tail;
+    struct Food *food;
+    fwrite(&foodList->count, sizeof(int), 1, sim_save->tick_store);
+    while (foodLHead != NULL)
+    {   
+        struct LinkedListNode *nextFood = foodLHead->next;
+        food = (struct Food *) foodLHead->obj;
+        writeVariableFood(sim_save, food);
+        foodLHead = nextFood;
+    }
+}
+
 void reset_simulation()
 {
     current_tick = 0;
     foodSpawnIndex = 0;
     sheepVisionTime = 0;
     totalSheepCreated = 0;
+    totalFoodCreated = 0;
 
     sheepList = newList();
     foodList = newList();
@@ -323,6 +344,7 @@ int run_simulation()
     advanceTick(sim_save);
 
     writeSheepStates();
+    writeFoodStates();
 
     printf("Wrote initial Sheep states\n");
 
@@ -336,6 +358,7 @@ int run_simulation()
 
         advanceTick(sim_save);
         writeSheepStates();
+        writeFoodStates();
         
 
         double percent = floor((double) current_tick / ss->sim_ticks * (100))/100.0;
