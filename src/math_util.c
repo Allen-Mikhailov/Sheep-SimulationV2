@@ -3,12 +3,12 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-double random()
+float random()
 {
-    return (double) rand() / RAND_MAX;
+    return (float) rand() / RAND_MAX;
 }
 
-double atanRange(double a)
+float atanRange(float a)
 {
     // printf("Inoput: %f\n", a);
     a = fmod(a, M_PI*2);
@@ -21,14 +21,14 @@ double atanRange(double a)
     return a;
 }
 
-double clamp(double d, double min, double max) {
-  const double t = d < min ? min : d;
+float clamp(float d, float min, float max) {
+  const float t = d < min ? min : d;
   return t > max ? max : t;
 }
 
-double compare_angles(double a1, double a2)
+float compare_angles(float a1, float a2)
 {
-    double dif = a2-a1;
+    float dif = a2-a1;
 
     if(dif < -M_PI)
         dif += M_PI*2;

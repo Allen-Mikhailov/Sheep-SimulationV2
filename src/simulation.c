@@ -14,19 +14,19 @@ int chunks;
 const int chunkRadiusX[] = {0, 0, 0, -1, -1, -1, 1, 1, 1};
 const int chunkRadiusY[] = {0, 1, -1, 0, 1, -1, 0, 1, -1};
 
-double foodSpawnIndex;
-double sheepVisionTime;
+float foodSpawnIndex;
+float sheepVisionTime;
 
 int current_tick;
 
 struct save_pointers *sim_save;
 
-double random_pos()
+float random_pos()
 {
-    return (double) rand() / RAND_MAX * ss->sim_map_size;
+    return random() * ss->sim_map_size;
 }
 
-int get_chunk(double x, double y)
+int get_chunk(float x, float y)
 {
     int cx = clamp(floor(x/ss->sim_grass_chunk_size) + 1, 1, chunks);
     int cy = clamp(floor(y/ss->sim_grass_chunk_size) + 1, 1, chunks);
@@ -320,7 +320,7 @@ int run_simulation()
     clock_t setupStart = clock();
 
     // Creating Grass Chunks
-    chunks = ceil((double) ss->sim_map_size / ss->sim_grass_chunk_size);
+    chunks = ceil(ss->sim_map_size / ss->sim_grass_chunk_size);
     grassChunks = malloc(sizeof(struct LinkedList) * (chunks+2) * (chunks+2));
     struct LinkedList *grassChunksHead = grassChunks;
     for (int i = 0; i < (chunks+2) * (chunks+2); i++)

@@ -73,6 +73,12 @@ HMENU CreateMenuOptions()
     return hMenu;
 }
 
+void MoveFrame(HWND hwnd, int offset)
+{
+    replay_frame = clamp(replay_frame + offset, 0, settings.sim_ticks);
+    RequestReplayDraw(hwnd);
+}   
+
 void HandleWM_COMMAND(HWND hwnd, WPARAM wParam)
 {
     switch (LOWORD(wParam)) {
@@ -90,34 +96,49 @@ void HandleWM_COMMAND(HWND hwnd, WPARAM wParam)
             break;
             
         case MENU_REPLAY_NEXT_FRAME:
-            replay_frame = min(replay_frame+1, settings.sim_ticks);
-            RequestReplayDraw(hwnd);
+            MoveFrame(hwnd, 1);
             break;
         case MENU_REPLAY_NEXT_10_FRAME:
-            replay_frame = min(replay_frame+10, settings.sim_ticks);
-            RequestReplayDraw(hwnd);
+            MoveFrame(hwnd, 10);
             break;
         case MENU_REPLAY_PREVIOUS_FRAME:
-            replay_frame = max(replay_frame-1, 0);
-            RequestReplayDraw(hwnd);
+            MoveFrame(hwnd, -1);
             break;
         case MENU_REPLAY_PREVIOUS_10_FRAME:
-            replay_frame = max(replay_frame-10, 0);
-            RequestReplayDraw(hwnd);
+            MoveFrame(hwnd, -10);
             break;
 
         // Add more cases as needed
     }
 }
 
+void HandleKeyDown(HWND hwnd, WPARAM key)
+{
+    switch (key)
+    {
+        case 0x27:
+            MoveFrame(hwnd, 1);
+            break;
+        case 0x25:
+            MoveFrame(hwnd, -1);
+            break;
+    }
+}
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    wchar_t msg[32];
     switch (message) {
         case WM_DESTROY:
             PostQuitMessage(0);
             break;
         case WM_COMMAND:
             HandleWM_COMMAND(hwnd, wParam);
+            break;  
+        case WM_KEYDOWN:
+            HandleKeyDown(hwnd, wParam);
+            // wprintf(L"WM_KEYDOWN: 0x%x\n", wParam);
             break;
+
         default:
             return DefWindowProc(hwnd, message, wParam, lParam);
         }
