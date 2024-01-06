@@ -69,6 +69,8 @@ struct Sheep* new_sheep()
     struct Sheep* sheep = malloc(sizeof(struct Sheep));
     sheep->start_tick = current_tick;
     sheep->hunger = .5;
+
+    sheep->visible_food_id = -1;
     
     sheep->a =  ( (double) rand() / RAND_MAX ) * M_PI*2 - M_PI;
     sheep->pregnantPeriod = -1;
@@ -93,8 +95,8 @@ void kill_sheep(struct LinkedListNode * sheep)
 struct SheepVision
 {
     struct Food *nFood;
-    double nFoodDist;
-    double nFoodAngle;
+    float nFoodDist;
+    float nFoodAngle;
 };
 
 void sheep_vision(struct Sheep * sheep, struct SheepVision *vision)
@@ -117,9 +119,9 @@ void sheep_vision(struct Sheep * sheep, struct SheepVision *vision)
         {  
             const struct Food *food = (struct Food *) (foodLHead->obj);
             
-            const double distance = hypot(sheep->x - food->x, sheep->y - food->y);
-            const double angle = atan2(food->y - sheep->y, food->x - sheep->x);
-            const double angleDif = COMPARE_ANGLES(sheep->a, angle);
+            const float distance = hypot(sheep->x - food->x, sheep->y - food->y);
+            const float angle = atan2(food->y - sheep->y, food->x - sheep->x);
+            const float angleDif = COMPARE_ANGLES(sheep->a, angle);
 
             if (distance < vision->nFoodDist && fabs(angleDif) < ss->sheep_view_angle)
             {
@@ -210,9 +212,15 @@ void sheep_tick(struct LinkedListNode * sheepNode)
     {
         MoveSpeed = .4;
         TurnSpeed = .5;
+
+        sheep->visible_food_id = -1;
     } else {
-        TurnSpeed =  signbit(vision->nFoodAngle)?-1:1;
+        int turn_dir = (0 < vision->nFoodAngle) - (vision->nFoodAngle < 0);
+        // Makes it so the sheep doesnt rotate past its food
+        TurnSpeed = min(fabs(vision->nFoodAngle), ss->sheep_max_turn_speed) * turn_dir / ss->sheep_max_turn_speed;
         MoveSpeed = 1;
+
+        sheep->visible_food_id = vision->nFood->id;
     }
 
     // Movement

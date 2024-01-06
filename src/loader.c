@@ -170,7 +170,7 @@ int readStaticSheep(struct save_pointers *save, struct Sheep* sheep, long id)
     return 0;
 }
 
-#define SHEEP_VARIABLE_INT_COUNT 4
+#define SHEEP_VARIABLE_INT_COUNT 5
 #define SHEEP_VARIABLE_FLOAT_COUNT 4
 void writeVariableSheep(struct save_pointers *save, struct Sheep* sheep)
 {
@@ -179,6 +179,7 @@ void writeVariableSheep(struct save_pointers *save, struct Sheep* sheep)
     ints[1] = sheep->lookingForMate;
     ints[2] = sheep->mateId;
     ints[3] = sheep->pregnantPeriod;
+    ints[4] = sheep->visible_food_id;
     fwrite(ints, sizeof(int), SHEEP_VARIABLE_INT_COUNT, save->tick_store);
 
     float floats[SHEEP_VARIABLE_FLOAT_COUNT];
@@ -193,10 +194,11 @@ void readVariableSheep(struct save_pointers *save, struct Sheep* sheep)
 {
     int ints[SHEEP_VARIABLE_INT_COUNT];
     fread(ints, sizeof(int), SHEEP_VARIABLE_INT_COUNT, save->tick_store);
-    sheep->id             = ints[0];
-    sheep->lookingForMate = ints[1];
-    sheep->mateId         = ints[2];
-    sheep->pregnantPeriod = ints[3];
+    sheep->id              = ints[0];
+    sheep->lookingForMate  = ints[1];
+    sheep->mateId          = ints[2];
+    sheep->pregnantPeriod  = ints[3];
+    sheep->visible_food_id = ints[4];
 
 
     float floats[SHEEP_VARIABLE_FLOAT_COUNT];

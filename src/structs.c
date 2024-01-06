@@ -15,6 +15,9 @@ struct Sheep {
 
     float hunger;
 
+    // For debugging
+    int visible_food_id;
+
     // Might make them asexual
     int lookingForMate;
     int mateId;

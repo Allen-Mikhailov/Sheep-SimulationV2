@@ -8,6 +8,8 @@ struct Sheep *frame_sheep;
 int sheep_count;
 
 struct Food *frame_food;
+int * foodIds;
+int *visible_food;
 int food_count;
 
 void FreeFrame()
@@ -16,6 +18,9 @@ void FreeFrame()
     opened_replay = FALSE;
     free(frame_sheep);
     free(frame_food);
+
+    free(foodIds);
+    free(visible_food);
 }
 
 int OpenReplay(struct save_pointers *save)
@@ -50,26 +55,38 @@ int LoadFrame(struct save_pointers *save)
         readVariableSheep(save, &frame_sheep[i]);
         readStaticSheep(save, &frame_sheep[i], frame_sheep[i].id);
     }
-
-    printf("Loaded Sheep\n");
-
     #endif
 
     #ifdef STORE_FOOD
     // Getting the Food Count
     fread(&food_count, sizeof(int), 1, save->tick_store);
     frame_food = malloc(sizeof(struct Food) * food_count);
+    foodIds = malloc(sizeof(int) * food_count);
+    visible_food = malloc(sizeof(int) * food_count);
 
     // Reading The Food
     for (int i = 0; i < food_count; i++)
     {
         readVariableFood(save, &frame_food[i]);
         readStaticFood(save, &frame_food[i], frame_food[i].id);
+
+        foodIds[i] = frame_food[i].id;
     }
-
-    printf("Loaded Food\n");
-
     #endif
+
+    // Doing Highlights
+    for (int i = 0; i < sheep_count; i++)
+    {
+        if (frame_sheep[i].visible_food_id != -1) {
+            int food_index = binarySearch(foodIds, food_count, frame_sheep[i].visible_food_id);
+            if (food_index == -1)
+            {
+                printf("Fucke");
+                continue;
+            }
+            visible_food[food_index] = 1;
+        }
+    }
 }
 
 #define REPLAY_BACKGROUND_COLOR RGB(200, 200, 200)
@@ -78,7 +95,9 @@ int LoadFrame(struct save_pointers *save)
 #define REPLAY_SHEEP_RADIUS 5
 
 #define REPLAY_FOOD_COLOR RGB(0, 255, 0)
+#define REPLAY_FOOD_HIGHLIGHT_COLOR RGB(255, 0, 0)
 #define REPLAY_FOOD_RADIUS 3
+
 
 void drawCircle(HDC hdc, float x, float y, float r)
 {
@@ -122,11 +141,19 @@ void DrawReplay(HDC bitmap, int size)
 
         MoveToEx(bitmap, x, y, NULL);
         LineTo(bitmap, x + cos(rightAngle)*r, y - sin(rightAngle)*r);
+
+        SetArcDirection(bitmap, AD_COUNTERCLOCKWISE); // or AD_COUNTERCLOCKWISE
+        Arc(bitmap, x - r, y - r, x + r, y + r, 
+            x + r * cos(leftAngle),  y - r * sin(leftAngle), 
+            x + r * cos(rightAngle), y - r * sin(rightAngle ));
     }
 
     DeleteObject(sheepBrush);
 
-    HBRUSH foodBrush = (HBRUSH) CreateSolidBrush(REPLAY_FOOD_COLOR);
+    HBRUSH foodBrush = (HBRUSH) CreateSolidBrush(REPLAY_FOOD_COLOR); // 0
+    HBRUSH highlightFoodBrush = (HBRUSH) CreateSolidBrush(REPLAY_FOOD_HIGHLIGHT_COLOR); // 1
+
+    char current_brush = 0;
     SelectObject(bitmap, foodBrush);
 
     for (int i = 0; i < food_count; i++)
@@ -135,6 +162,18 @@ void DrawReplay(HDC bitmap, int size)
 
         double x = food->x*scale;
         double y = size - food->y*scale;
+
+        if (visible_food[i] == 1)
+            printf("Visible Food :: i=%d id=%d x=%f y=%f\n", i, food->id, x, y);
+
+        // overly complicated logic for switching between brushes
+        if (current_brush == 0 && visible_food[i] == 1) {
+            SelectObject(bitmap, highlightFoodBrush);
+            current_brush = 1;
+        } else if (current_brush == 1 && visible_food[i] == 0) {
+            SelectObject(bitmap, foodBrush);
+            current_brush = 0;
+        }
 
         drawCircle(bitmap, x, y, REPLAY_FOOD_RADIUS);
     }

@@ -26,4 +26,24 @@ float clamp(float d, float min, float max) {
   return t > max ? max : t;
 }
 
+int rawBinarySearch(int arr[], int l, int r, int x)
+{
+    while (l <= r) {
+        int m = (l + r) / 2;
+        if (arr[m] == x)
+            return m;
+        
+        if (arr[m] < x)
+            l = m + 1;
+        else
+            r = m - 1;
+    }
+    return -1;
+}
+
+int binarySearch(int arr[], int length, int target)
+{
+    return rawBinarySearch(arr, 0, length-1, target);
+}
+
 #define COMPARE_ANGLES(a1, a2) fmod(fabs(a1 - a2) + M_PI, M_PI*2) - M_PI;
