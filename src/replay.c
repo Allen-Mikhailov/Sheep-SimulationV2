@@ -85,32 +85,43 @@ void drawCircle(HDC hdc, float x, float y, float r)
     Ellipse(hdc, x-r, y-r,x+r, y+r);
 }
 
-void DrawReplay(HDC bitmap, int width, int height)
+void DrawReplay(HDC bitmap, int size)
 {
     // Drawing Background
     HBRUSH backgroundBrush = (HBRUSH) CreateSolidBrush(REPLAY_BACKGROUND_COLOR);
-    RECT rect = {0, 0, width, height};
+    RECT rect = {0, 0, size, size};
     FillRect(bitmap, &rect, backgroundBrush);
     DeleteObject(backgroundBrush);
+
+    printf("MapSize: %f, Sheep: %d, Food: %d\n", settings.sim_map_size, sheep_count, food_count);
 
     // Drawing the Sheep
     HBRUSH sheepBrush = (HBRUSH) CreateSolidBrush(REPLAY_SHEEP_COLOR);
     SelectObject(bitmap, sheepBrush);
 
+    // The simulation is a square
+    const float scale = (size / settings.sim_map_size);
+    const float r = settings.sheep_view_distance*scale; 
+
     // 0, 0 is bottom left
-    printf("MapSize: %f, Sheep: %d, Food: %d\n", settings.sim_map_size, sheep_count, food_count);
     for (int i = 0; i < sheep_count; i++)
     {
         struct Sheep *sheep = &frame_sheep[i];
 
-        double x = sheep->x/settings.sim_map_size * width;
-        double y = (1 - sheep->y/settings.sim_map_size) * height;
+        float x = sheep->x*scale;
+        float y = (size - sheep->y*scale);
 
         drawCircle(bitmap, x, y, REPLAY_SHEEP_RADIUS);
 
+        float leftAngle = sheep->a - settings.sheep_view_angle;
+        float rightAngle = sheep->a + settings.sheep_view_angle;
+
         // Drawing the view direction
         MoveToEx(bitmap, x, y, NULL);
-        LineTo(bitmap, x + cos(sheep->a)*20, y - sin(sheep->a)*20);
+        LineTo(bitmap, x + cos(leftAngle)*r, y - sin(leftAngle)*r);
+
+        MoveToEx(bitmap, x, y, NULL);
+        LineTo(bitmap, x + cos(rightAngle)*r, y - sin(rightAngle)*r);
     }
 
     DeleteObject(sheepBrush);
@@ -122,8 +133,8 @@ void DrawReplay(HDC bitmap, int width, int height)
     {
         struct Food *food = &frame_food[i];
 
-        double x = food->x/settings.sim_map_size * width;
-        double y = (1 - food->y/settings.sim_map_size) * height;
+        double x = food->x*scale;
+        double y = size - food->y*scale;
 
         drawCircle(bitmap, x, y, REPLAY_FOOD_RADIUS);
     }

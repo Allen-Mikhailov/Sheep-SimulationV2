@@ -26,13 +26,4 @@ float clamp(float d, float min, float max) {
   return t > max ? max : t;
 }
 
-float compare_angles(float a1, float a2)
-{
-    float dif = a2-a1;
-
-    if(dif < -M_PI)
-        dif += M_PI*2;
-    if(dif > M_PI)
-        dif -= M_PI*2;
-    return dif;
-}
+#define COMPARE_ANGLES(a1, a2) fmod(fabs(a1 - a2) + M_PI, M_PI*2) - M_PI;

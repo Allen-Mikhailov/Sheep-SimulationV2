@@ -10,13 +10,13 @@ void getDefaultSettings(struct SimSettings *ss)
     ss->sheep_starve_rate = .005f;
     ss->sheep_thirst_rate = 0;
 
-    ss->sheep_eating_range = 5;
+    ss->sheep_eating_range = 3;
 
     ss->sheep_max_speed = 3;
-    ss->sheep_max_turn_speed = .15f;
+    ss->sheep_max_turn_speed = .3f;
 
-    ss->sheep_view_distance = 100;
-    ss->sheep_view_angle = (M_1_PI / 4);
+    ss->sheep_view_distance = 10;
+    ss->sheep_view_angle = (M_PI / 8);
 
     ss->sheep_max_lifespan = 10000,
 
@@ -27,11 +27,11 @@ void getDefaultSettings(struct SimSettings *ss)
     ss->sheep_pregnant_period = 100;
     ss->sheep_pregnant_hunger_cost = 100;
 
-    ss->sim_starting_sheep = 100;
-    ss->sim_ticks = 100;
+    ss->sim_starting_sheep = 5;
+    ss->sim_ticks = 1000;
     ss->sim_food_spawn_rate = 1;
-    ss->sim_food_max = 1000;
-    ss->sim_map_size = 1000;
+    ss->sim_food_max = 100;
+    ss->sim_map_size = 100;
     ss->sim_grass_chunk_size = ss->sheep_view_distance;
 }
 

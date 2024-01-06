@@ -30,7 +30,7 @@ void RequestReplayDraw(HWND hwnd)
     SelectObject(replay_hdc, bitmap);
 
     LoadFrame(&replay_save);
-    DrawReplay(replay_hdc, size, size);
+    DrawReplay(replay_hdc, size);
 
     // Drawing Replay
     BitBlt(hdc, horizontalPadding, vertialPadding, size, size, replay_hdc, 0, 0, SRCCOPY);

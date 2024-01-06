@@ -105,21 +105,21 @@ void sheep_vision(struct Sheep * sheep, struct SheepVision *vision)
     vision->nFood = NULL;
     vision->nFoodDist = ss->sheep_view_distance;
 
-    int sChunk = get_chunk(sheep->x, sheep->y);
+    const int sChunk = get_chunk(sheep->x, sheep->y);
 
     for (int i = 0; i < 9; i++)
     {
-        int lsChunk = sChunk + chunkRadiusX[i] + chunkRadiusY[i] * (chunks+2);
-        struct LinkedList * grassChunk = grassChunks + lsChunk;
+        const int lsChunk = sChunk + chunkRadiusX[i] + chunkRadiusY[i] * (chunks+2);
+        const struct LinkedList * grassChunk = grassChunks + lsChunk;
         struct LinkedListNode *foodLHead = grassChunk->tail;
 
         while (foodLHead != NULL)
         {  
-            struct Food *food = (struct Food *) (foodLHead->obj);
+            const struct Food *food = (struct Food *) (foodLHead->obj);
             
-            double distance = hypot(sheep->x - food->x, sheep->y - food->y);
-            double angle = atan2(food->y - sheep->y, food->x - sheep->x);
-            double angleDif = compare_angles(sheep->a, angle);
+            const double distance = hypot(sheep->x - food->x, sheep->y - food->y);
+            const double angle = atan2(food->y - sheep->y, food->x - sheep->x);
+            const double angleDif = COMPARE_ANGLES(sheep->a, angle);
 
             if (distance < vision->nFoodDist && fabs(angleDif) < ss->sheep_view_angle)
             {
@@ -132,7 +132,7 @@ void sheep_vision(struct Sheep * sheep, struct SheepVision *vision)
         }
     }
 
-    sheepVisionTime += ( (double) clock() - t ) / CLOCKS_PER_SEC;
+    sheepVisionTime += ( (float) clock() - t ) / CLOCKS_PER_SEC;
 }
 
 void Birth(struct Sheep * s1)
@@ -198,8 +198,8 @@ void sheep_tick(struct LinkedListNode * sheepNode)
     if (current_tick-sheep->start_tick >= ss->sheep_max_lifespan)
         kill_sheep(sheepNode);
 
-    double TurnSpeed;
-    double MoveSpeed;
+    float TurnSpeed;
+    float MoveSpeed;
 
     struct SheepVision vis;
     struct SheepVision *vision = &vis;
