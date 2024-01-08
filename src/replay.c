@@ -101,7 +101,7 @@ int LoadFrame(struct save_pointers *save)
 
 void drawCircle(HDC hdc, float x, float y, float r)
 {
-    Ellipse(hdc, x-r, y-r,x+r, y+r);
+    Ellipse(hdc, round(x-r), round(y-r), round(x+r), round(y+r));
 }
 
 void DrawReplay(HDC bitmap, int size)

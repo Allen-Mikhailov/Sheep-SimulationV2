@@ -11,6 +11,10 @@ echo.
 echo Removing Existing Build
 echo.
 
+if not exist %scriptFolder%\build%(
+    mkdir %scriptFolder%\build
+)
+
 del %scriptFolder%\%buildOutput%
 
 echo.
